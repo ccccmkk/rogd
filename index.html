@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>심연의 ASCII 던전: 100층의 시련</title>
+    <title>던전 오디세이: 100층의 여정</title>
     <style>
         :root {
             --bg-color: #050505;
@@ -332,7 +332,7 @@
 
     <!-- 도박 오버레이 -->
     <div id="gamble-overlay" class="overlay-base">
-        <div class="gamble-title">🎲 심연의 도박사</div>
+        <div class="gamble-title">🎲 🎲 운명의 도박사</div>
         <div class="gamble-subtitle">"운이 좋으면 전설이 되고, 나쁘면 재가 된다..."</div>
         <div id="gamble-gold-disp" style="color:var(--accent-color);font-size:16px;margin-bottom:15px;"></div>
         <div class="card-container" id="gamble-card-container"></div>
@@ -356,25 +356,51 @@
     </div>
 
     <!-- 시작 화면 -->
-    <div id="start-overlay" class="overlay-base start-overlay">
-        <h1 style="color:var(--text-color);font-size:32px;margin-bottom:20px;text-shadow:0 0 10px var(--text-color);text-align:center;">심연의 던전에 오신 것을 환영합니다</h1>
-        <div class="guide-box">
-            <p style="color:#fff;font-size:18px;margin-bottom:15px;border-bottom:1px solid #444;padding-bottom:5px;">[ 조작 가이드 ]</p>
-            <div style="line-height:1.8;">
-                <span style="color:var(--accent-color)">■ 이동:</span> 방향키 (Arrow Keys)<br>
-                <span style="color:var(--accent-color)">■ 대기:</span> Space 바<br>
-                <span style="color:var(--accent-color)">■ 메뉴/다시시작:</span> R 키<br>
-                <span style="color:var(--accent-color)">■ 저장/불러오기:</span> . (마침표) 키<br>
-                <span style="color:var(--accent-color)">■ 디버그 콘솔:</span> ` (백틱) 키<br>
-                <span style="color:var(--gambler-color)">■ 도박사(G):</span> 밟으면 도박 시작
+    <div id="start-overlay" class="overlay-base start-overlay" style="overflow-y:auto;padding:30px 20px;">
+        <h1 style="color:var(--text-color);font-size:28px;margin-bottom:6px;text-shadow:0 0 10px var(--text-color);text-align:center;">⚔ 던전 오디세이</h1>
+        <p style="color:#aaa;font-size:13px;text-align:center;margin-bottom:18px;">100층 깊이의 던전을 탐험하라</p>
+
+        <div class="guide-box" style="margin-bottom:12px;">
+            <p style="color:#fff;font-size:15px;margin-bottom:10px;border-bottom:1px solid #444;padding-bottom:5px;">📖 게임 방법</p>
+            <div style="line-height:2;font-size:13px;color:#ccc;">
+                <span style="color:#7af">@</span> 를 조작해 방향키로 이동하며 몬스터를 쓰러뜨리세요.<br>
+                몬스터와 같은 칸으로 이동하면 자동으로 전투합니다.<br>
+                <span style="color:#fa0">?</span> 상자에서 능력(퍽)이나 특수 기술을 획득할 수 있습니다.<br>
+                <span style="color:#0cf">></span> 계단을 밟으면 다음 층으로 내려갑니다.<br>
+                <span style="color:#0f0">S</span> 상점에서 능력치를 강화하고, <span style="color:#f0f">G</span> 도박사에게 운을 시험하세요.<br>
+                <span style="color:#ff0">H</span> 지름길(5층 이동)은 확인 후 선택할 수 있습니다.<br>
+                방향키를 연속 입력하면 <span style="color:#fa0">특수 기술</span>이 발동됩니다! (상자에서 습득)
             </div>
         </div>
-        <p style="margin-top:10px;color:#fff;animation:blink 1.5s infinite;font-size:18px;">- 아무 키나 눌러서 시작 -</p>
+
+        <div class="guide-box" style="margin-bottom:12px;">
+            <p style="color:#fff;font-size:15px;margin-bottom:10px;border-bottom:1px solid #444;padding-bottom:5px;">🗺 구역별 안내</p>
+            <div style="line-height:2;font-size:12px;">
+                <span style="color:#7cf">B1~B10</span>  &nbsp;초원의 동굴 — 약한 슬라임, 박쥐 출현<br>
+                <span style="color:#7cf">B11~B20</span> 고블린 소굴 — 고블린, 늑대 등장 / <span style="color:#f88">B20 보스</span><br>
+                <span style="color:#fa0">B21~B30</span> 화염 용암굴 — 오크, 불도마뱀 출현<br>
+                <span style="color:#fa0">B31~B40</span> 강철 요새 — 철갑 기사, 트롤 등장 / <span style="color:#f88">B40 보스</span><br>
+                <span style="color:#f88">B41~B50</span> 마법사의 탑 — 마법사, 고스트 출현<br>
+                <span style="color:#f88">B51~B60</span> 어둠의 숲 — 뱀파이어, 악마 등장 / <span style="color:#f88">B60 보스</span><br>
+                <span style="color:#f0f">B61~B80</span> 용의 둥지 — 드래곤 린, 리치 출현 / <span style="color:#f88">B80 보스</span><br>
+                <span style="color:#fff">B81~B100</span> 신계의 관문 — 최강의 적들 / <span style="color:#fa0">B100 최종 보스</span>
+            </div>
+        </div>
+
+        <div class="guide-box" style="margin-bottom:14px;">
+            <p style="color:#fff;font-size:15px;margin-bottom:10px;border-bottom:1px solid #444;padding-bottom:5px;">⌨ 조작 키</p>
+            <div style="line-height:1.9;font-size:13px;color:#ccc;">
+                <span style="color:var(--accent-color)">방향키</span> 이동 / 전투 &nbsp;|&nbsp; <span style="color:var(--accent-color)">Space</span> 대기<br>
+                <span style="color:var(--accent-color)">R</span> 리셋 확인 &nbsp;|&nbsp; <span style="color:var(--accent-color)">.</span> 저장·불러오기
+            </div>
+        </div>
+
+        <p style="color:#fff;animation:blink 1.5s infinite;font-size:16px;text-align:center;">— 아무 키나 눌러서 시작 —</p>
     </div>
 
     <!-- 사망 화면 -->
     <div id="death-screen" class="overlay-base death-overlay">
-        <h1 style="color:#f00;font-size:40px;margin-bottom:10px;">심연에 삼켜졌습니다</h1>
+        <h1 style="color:#f00;font-size:40px;margin-bottom:10px;">던전에 쓰러졌습니다</h1>
         <p style="color:#ccc;margin-bottom:20px;">어떻게 여정을 계속하시겠습니까?</p>
         <div style="width:100%;">
             <button class="choice-btn" onclick="gameState.restart('checkpoint')">
@@ -663,7 +689,7 @@ let gameState = {
             this.savePointFloor = 1; this.floorNum = 1;
             this.isBossClearedAtSavePoint = false;
             this.player = this.createDefaultPlayer();
-            addLog("심연이 모든 기억을 삼켰습니다. 처음부터 시작합니다.");
+            addLog("모든 기억이 사라졌습니다. 처음부터 시작합니다.");
         } else if (mode === 'memory') {
             this.deathCount++; this.floorNum = 1;
             this.isBossClearedAtSavePoint = false;
@@ -751,7 +777,7 @@ function showBossWarning() {
     const f = gameState.floorNum;
     const myPow = calcPower(gameState.player);
     const recPow = bossPower(f);
-    const bossNames = {20:'킹 슬라임', 40:'강철 골렘', 60:'공허의 눈', 80:'지옥 파수꾼', 100:'심연의 주권자'};
+    const bossNames = {20:'점액 군주 그로그', 40:'강철 골렘 아이언클래드', 60:'대마법사 말켄', 80:'용왕 이그니스', 100:'신계의 수호자 아에온'};
     const ratio = myPow / recPow;
     let msg, color;
     if (ratio >= 1.2)      { msg = '✅ 충분한 전투력입니다!';         color = '#33ff33'; }
@@ -789,6 +815,18 @@ function bossRetreat() {
 }
 
 // ─── 층 전환 배너 ───
+function getZoneName(f) {
+    if (f <= 10)  return '초원의 동굴';
+    if (f <= 20)  return '고블린 소굴';
+    if (f <= 30)  return '화염 용암굴';
+    if (f <= 40)  return '강철 요새';
+    if (f <= 50)  return '마법사의 탑';
+    if (f <= 60)  return '어둠의 숲';
+    if (f <= 70)  return '용의 둥지';
+    if (f <= 80)  return '용왕의 궁전';
+    if (f <= 90)  return '신계의 관문';
+    return '신계의 정점';
+}
 function showFloorBanner() {
     const f = gameState.floorNum;
     const banner = document.getElementById('floor-banner');
@@ -796,9 +834,9 @@ function showFloorBanner() {
     const subEl = document.getElementById('floor-banner-sub');
     const isBoss = (f % 20 === 0);
     numEl.innerText = `B${f}`;
-    subEl.innerText = isBoss ? '⚠ BOSS FLOOR ⚠' : `DEPTH ${f}`;
+    subEl.innerText = isBoss ? `⚠ BOSS: ${getZoneName(f)} ⚠` : getZoneName(f);
     banner.className = isBoss ? 'boss-floor show' : 'show';
-    setTimeout(() => { banner.classList.remove('show'); }, 900);
+    setTimeout(() => { banner.classList.remove('show'); }, 1200);
 }
 
 // ─── 시각 효과 ───
@@ -965,11 +1003,11 @@ function generateBossFloor() {
         const f=gameState.floorNum;
         let b={x:Math.floor(gameState.currentWidth/2), y:Math.floor(gameState.currentHeight/2), size:2,
                hp:f*55, maxHp:f*55, def:f*0.45, name:"", char:"B"};
-        if (f===20)  { b.name="킹 슬라임";    b.size=2; b.char="K"; b.ability="split"; }
-        else if (f===40) { b.name="강철 골렘";  b.size=3; b.char="G"; b.hp*=1.3; b.def*=1.3; }
-        else if (f===60) { b.name="공허의 눈";  b.size=2; b.char="E"; b.ability="teleport"; }
-        else if (f===80) { b.name="지옥 파수꾼";b.size=3; b.char="J"; b.ability="summon"; }
-        else if (f===100){ b.name="심연의 주권자";b.size=4; b.char="X"; b.hp*=2.5; b.def*=1.8; b.ability="all"; }
+        if (f===20)  { b.name="점액 군주 그로그";       b.size=2; b.char="K"; b.ability="split"; }
+        else if (f===40) { b.name="강철 골렘 아이언클래드"; b.size=3; b.char="G"; b.hp*=1.3; b.def*=1.3; }
+        else if (f===60) { b.name="대마법사 말켄";        b.size=2; b.char="E"; b.ability="teleport"; }
+        else if (f===80) { b.name="용왕 이그니스";        b.size=3; b.char="J"; b.ability="summon"; }
+        else if (f===100){ b.name="신계의 수호자 아에온"; b.size=4; b.char="X"; b.hp*=2.5; b.def*=1.8; b.ability="all"; }
         b.maxHp=b.hp;
         gameState.boss=b; gameState.bossActive=true;
         document.getElementById('screen').classList.add('boss-active-pulse');
@@ -1391,7 +1429,7 @@ function triggerShop(shopIdx) {
         ov.style.display='none'; close.style.display='none';
         updateUI(); render();
     }
-    document.getElementById('overlay-title').innerText='⚔ 심연의 상점';
+    document.getElementById('overlay-title').innerText='⚔ 모험가의 상점';
     const goldDisp=document.getElementById('held-gold-shop');
     goldDisp.innerText=`보유 골드: ${gameState.player.gold} G`;
     goldDisp.style.display='block';
