@@ -317,8 +317,7 @@
         <div id="boss-warn-my" style="font-size:28px;font-weight:bold;margin-bottom:20px;"></div>
         <div id="boss-warn-msg" style="font-size:13px;margin-bottom:20px;"></div>
         <div style="display:flex;gap:15px;">
-            <button class="choice-btn" style="max-width:200px;text-align:center;" onclick="bossFightConfirm()"><strong>[1] 입장</strong></button>
-            <button class="choice-btn" style="max-width:200px;text-align:center;border-color:#888;" onclick="bossRetreat()"><strong>[2] 후퇴</strong></button>
+            <button class="choice-btn" style="max-width:200px;text-align:center;" onclick="bossFightConfirm()"><strong>[Enter] 입장</strong></button>
         </div>
     </div>
 
@@ -431,9 +430,9 @@
                 <strong>[2] 1층부터 시작 (기억 유지)</strong>
                 <small>스탯과 강화를 유지하고 1층부터 다시 도전</small>
             </button>
-            <button class="choice-btn" onclick="gameState.restart('oblivion')" style="border-color:#f44;">
-                <strong>[3] 완전한 망각 (초기화)</strong>
-                <small>모든 능력치와 진행도를 잃고 처음부터</small>
+            <button class="choice-btn" onclick="gameState.restart('oblivion')" style="border-color:#555;opacity:0.7;">
+                <strong style="color:#aaa">[0] 완전한 망각 (초기화)</strong>
+                <small style="color:#777">모든 능력치와 진행도를 잃고 처음부터</small>
             </button>
         </div>
     </div>
@@ -617,7 +616,7 @@ function startQTE() {
         const dmg=Math.max(1,(gameState.floorNum*1.5)-totalDef);
         p.hp-=Math.floor(dmg); screenEffect('red');
         floatText(`QTE실패 -${Math.floor(dmg)}`,'#ff0000');
-        if(p.hp<=0){p.hp=0;gameState.isGameOver=true;document.getElementById('death-screen').style.display='flex';}
+        if(p.hp<=0){p.hp=0;gameState.isGameOver=true;document.getElementById('screen').classList.remove('anim-shake','anim-flash-red','anim-flash-yellow','anim-flash-green','anim-flash-purple');document.getElementById('death-screen').style.display='flex';}
         updateUI(); render();
     }, dur);
     qteState = { key, tid };
@@ -1335,6 +1334,8 @@ function tick() {
 
     if (p.hp<=0) {
         p.hp=0; gameState.isGameOver=true; gameState.combo=0;
+        const scr=document.getElementById('screen');
+        scr.classList.remove('anim-shake','anim-flash-red','anim-flash-yellow','anim-flash-green','anim-flash-purple');
         const desc=document.getElementById('checkpoint-desc');
         if(desc) desc.innerText=`마지막 보스 처치 지점 (B${gameState.savePointFloor})에서 재개`;
         document.getElementById('death-screen').style.display='flex';
@@ -1738,8 +1739,7 @@ window.addEventListener('keydown', e=>{
 
     // ── 보스 경고 ──
     if(document.getElementById('boss-warn-overlay').style.display==='flex'){
-        if(num===1||e.key==='Enter') bossFightConfirm();
-        else if(num===2||e.key==='Escape') bossRetreat();
+        if(e.key==='Enter') bossFightConfirm();
         return;
     }
 
@@ -1747,7 +1747,7 @@ window.addEventListener('keydown', e=>{
     if(document.getElementById('death-screen').style.display==='flex'){
         if(num===1) gameState.restart('checkpoint');
         else if(num===2) gameState.restart('memory');
-        else if(num===3) gameState.restart('oblivion');
+        else if(num===0||e.key==='0') gameState.restart('oblivion');
         return;
     }
 
