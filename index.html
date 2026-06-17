@@ -1416,6 +1416,36 @@ function render() {
         out+='\n';
     }
     screen.innerHTML=out;
+    renderHpBars(screen, p);
+}
+
+function renderHpBars(screen, p) {
+    screen.querySelectorAll('.m-hpbar').forEach(e=>e.remove());
+    // measure one character cell size
+    const tmp = document.createElement('span');
+    tmp.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;';
+    tmp.textContent = 'X';
+    screen.appendChild(tmp);
+    const cw = tmp.offsetWidth || 10;
+    const ch = tmp.offsetHeight || 15;
+    tmp.remove();
+    const pad = 15; // #screen padding
+    gameState.monsters.forEach(m => {
+        const dist = Math.sqrt((m.x-p.x)**2+(m.y-p.y)**2);
+        if(dist > p.viewDistance || m.hp <= 0) return;
+        const pct = Math.max(0, m.hp / m.maxHp);
+        const bar = document.createElement('div');
+        bar.className = 'm-hpbar';
+        bar.style.cssText = `position:absolute;pointer-events:none;` +
+            `left:${pad + m.x*cw - 1}px;` +
+            `top:${pad + m.y*ch - 5}px;` +
+            `width:${cw+2}px;height:3px;background:#400;border-radius:1px;`;
+        const fill = document.createElement('div');
+        fill.style.cssText = `width:${Math.round(pct*100)}%;height:100%;border-radius:1px;` +
+            `background:${pct>0.5?'#0c0':pct>0.25?'#fa0':'#f33'};`;
+        bar.appendChild(fill);
+        screen.appendChild(bar);
+    });
 }
 
 // ─── 강화 선택 ───
