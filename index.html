@@ -237,6 +237,11 @@
             </div>
             <div class="stat-box">
                 <span class="stat-header">● 캐릭터 정보</span>
+                <div class="stat-line" style="margin-bottom:6px;">
+                    <span style="color:#fff;font-weight:bold;">전투력</span>
+                    <span id="power-display" style="color:var(--accent-color);font-weight:bold;font-size:15px;">0</span>
+                </div>
+                <div style="height:1px;background:#222;margin-bottom:6px;"></div>
                 <div class="stat-line"><span>LV / XP:</span> <span id="lv-xp">1 (0/20)</span></div>
                 <div class="stat-line"><span>HP:</span> <span id="hp">150 / 150</span></div>
                 <div class="stat-line">
@@ -267,6 +272,21 @@
             </div>
             <div id="log"></div>
             <div style="font-size:10px;color:#555;text-align:center;">저장/불러오기: '.' 키 | 대기: Space</div>
+        </div>
+    </div>
+
+    <!-- 보스 입장 경고 오버레이 -->
+    <div id="boss-warn-overlay" class="overlay-base" style="z-index:190;background:rgba(40,0,0,0.95);">
+        <div style="font-size:28px;color:var(--boss-color);margin-bottom:10px;text-shadow:0 0 15px var(--boss-color);">⚠ BOSS FLOOR</div>
+        <div id="boss-warn-name" style="font-size:20px;color:#fff;margin-bottom:20px;"></div>
+        <div style="font-size:13px;color:#aaa;margin-bottom:8px;">권장 전투력</div>
+        <div id="boss-warn-rec" style="font-size:32px;color:var(--accent-color);font-weight:bold;margin-bottom:6px;"></div>
+        <div style="font-size:13px;color:#aaa;margin-bottom:4px;">내 전투력</div>
+        <div id="boss-warn-my" style="font-size:28px;font-weight:bold;margin-bottom:20px;"></div>
+        <div id="boss-warn-msg" style="font-size:13px;margin-bottom:20px;"></div>
+        <div style="display:flex;gap:15px;">
+            <button class="choice-btn" style="max-width:200px;text-align:center;" onclick="bossFightConfirm()"><strong>[1] 입장</strong></button>
+            <button class="choice-btn" style="max-width:200px;text-align:center;border-color:#888;" onclick="bossRetreat()"><strong>[2] 후퇴</strong></button>
         </div>
     </div>
 
@@ -449,7 +469,7 @@ let gameState = {
         return {
             x:0, y:0, hp:150, maxHp:150, baseAtk:12, baseDef:2,
             bonusAtk:0, bonusDef:0, xp:0, nextXp:20, lv:1, gold:0,
-            viewDistance:8, skills:{}, perks:{}
+            viewDistance:8, skills:{}, perks:{}, fateToken:false
         };
     }
 };
@@ -468,6 +488,57 @@ function getSaveCode() {
         return `${id}:${cnt}`;
     }).join(',');
     return encrypt(core+'|'+perks).match(/.{1,5}/g).join('-').toUpperCase();
+}
+
+// ─── 전투력 계산 ───
+function calcPower(p) {
+    return Math.floor(p.maxHp * 0.4) + (p.baseAtk + p.bonusAtk) * 4 + (p.baseDef + p.bonusDef) * 7;
+}
+function bossPower(floor) {
+    return floor * 55;
+}
+
+// ─── 보스 입장 경고 ───
+let _pendingBossFloor = false;
+function showBossWarning() {
+    const f = gameState.floorNum;
+    const myPow = calcPower(gameState.player);
+    const recPow = bossPower(f);
+    const bossNames = {20:'킹 슬라임', 40:'강철 골렘', 60:'공허의 눈', 80:'지옥 파수꾼', 100:'심연의 주권자'};
+    const ratio = myPow / recPow;
+    let msg, color;
+    if (ratio >= 1.2)      { msg = '✅ 충분한 전투력입니다!';         color = '#33ff33'; }
+    else if (ratio >= 0.9) { msg = '⚡ 도전 가능한 수준입니다.';      color = '#ffcc00'; }
+    else if (ratio >= 0.6) { msg = '⚠ 위험합니다. 강화를 추천합니다.'; color = '#ff8800'; }
+    else                   { msg = '💀 압도적으로 불리합니다!';        color = '#ff2200'; }
+
+    document.getElementById('boss-warn-name').innerText = bossNames[f] || '???';
+    document.getElementById('boss-warn-rec').innerText = recPow;
+    const myEl = document.getElementById('boss-warn-my');
+    myEl.innerText = myPow;
+    myEl.style.color = color;
+    document.getElementById('boss-warn-msg').innerHTML = `<span style="color:${color}">${msg}</span>`;
+    _pendingBossFloor = true;
+    gameState.isPaused = true;
+    document.getElementById('boss-warn-overlay').style.display = 'flex';
+}
+function bossFightConfirm() {
+    document.getElementById('boss-warn-overlay').style.display = 'none';
+    gameState.isPaused = false;
+    _pendingBossFloor = false;
+    generateBossFloor();
+    showFloorBanner();
+    updateUI(); render();
+}
+function bossRetreat() {
+    document.getElementById('boss-warn-overlay').style.display = 'none';
+    gameState.isPaused = false;
+    _pendingBossFloor = false;
+    // 한 층 뒤로
+    gameState.floorNum = Math.max(1, gameState.floorNum - 1);
+    generateNormalFloor();
+    addLog('보스 방에서 후퇴했습니다.');
+    updateUI(); render();
 }
 
 // ─── 층 전환 배너 ───
@@ -573,8 +644,12 @@ function generateFloor() {
     gameState.map = Array.from({length:gameState.currentHeight},()=>Array(gameState.currentWidth).fill(TILES.WALL));
     gameState.monsters=[]; gameState.items=[]; gameState.shops=[]; gameState.gamblers=[];
     gameState.bossActive=false; gameState.boss=null; gameState.shortcut=null;
-    if (gameState.floorNum % 20 === 0) generateBossFloor();
-    else generateNormalFloor();
+    if (gameState.floorNum % 20 === 0) {
+        // 보스 층: 맵만 준비, 경고 오버레이를 showBossWarning에서 처리
+        showBossWarning();
+    } else {
+        generateNormalFloor();
+    }
     gameState.isBossClearedAtSavePoint = false;
 }
 
@@ -766,6 +841,12 @@ function attackBoss() {
         gameState.isBossClearedAtSavePoint=true;
         document.getElementById('screen').classList.remove('boss-active-pulse');
         screenEffect('purple');
+        // 보스 처치 시 운명의 패 확정 지급
+        if(!gameState.player.fateToken){
+            gameState.player.fateToken=true;
+            addLog('✨ [운명의 패] 획득! 선택지가 4개로 확장됩니다.');
+            floatText('운명의 패!','#ff00ff');
+        }
         const margin=3;
         for(let i=0;i<18;i++){
             const rx=margin+Math.floor(Math.random()*(gameState.currentWidth-margin*2));
@@ -904,6 +985,9 @@ function tick() {
 // ─── UI 렌더링 ───
 function updateUI() {
     const p=gameState.player;
+    const powEl=document.getElementById('power-display');
+    if(powEl) powEl.innerText=calcPower(p);
+
     const map={
         'lv-xp':`${p.lv} (${Math.floor(p.xp)}/${p.nextXp})`,
         'hp':`${Math.floor(p.hp)} / ${p.maxHp}`,
@@ -923,7 +1007,9 @@ function updateUI() {
     const pList=document.getElementById('perk-list');
     if(pList){
         const keys=Object.keys(p.perks);
-        pList.innerHTML=keys.length?keys.map(k=>`${k} x${p.perks[k]}`).join('<br>'):'없음';
+        let perkHtml=keys.length?keys.map(k=>`${k} x${p.perks[k]}`).join('<br>'):'없음';
+        if(p.fateToken) perkHtml+=`<br><span style="color:#ff00ff">✨ 운명의 패 (선택지+1)</span>`;
+        pList.innerHTML=perkHtml;
     }
     const bInfo=document.getElementById('boss-info');
     if(bInfo&&gameState.bossActive){
@@ -976,9 +1062,7 @@ function triggerSelection(title) {
     document.getElementById('close-overlay').style.display='none';
     cont.innerHTML=''; ov.style.display='flex';
 
-    const p3=gameState.player;
-    const hasSpecialPerk=Object.values(p3.perks).reduce((a,b)=>a+b,0)>=3;
-    const picked=[...ALL_PERKS].sort(()=>0.5-Math.random()).slice(0, hasSpecialPerk?4:3);
+    const picked=[...ALL_PERKS].sort(()=>0.5-Math.random()).slice(0, gameState.player.fateToken?4:3);
     picked.forEach((perk,i)=>{
         const card=document.createElement('div');
         card.className='card';
@@ -1018,10 +1102,7 @@ function triggerShop() {
         {name:'강화 재추첨',    price:200, desc:'강화 선택 1회', effect:_=>{setTimeout(()=>triggerSelection('재추첨 강화 선택'),50);}},
         {name:'힘의 두루마리',  price:300, desc:'ATK+10, DEF+5', effect:p=>{p.baseAtk+=10;p.baseDef+=5;}},
     ];
-    // 기본 3개 랜덤 선택, 특별 능력(퍽 3개 이상) 있으면 4개
-    const p2=gameState.player;
-    const hasSpecial=Object.values(p2.perks).reduce((a,b)=>a+b,0)>=3;
-    const shopItems=[...allShopItems].sort(()=>0.5-Math.random()).slice(0, hasSpecial?4:3);
+    const shopItems=[...allShopItems].sort(()=>0.5-Math.random()).slice(0, gameState.player.fateToken?4:3);
 
     shopItems.forEach((it,i)=>{
         const can=gameState.player.gold>=it.price;
@@ -1178,6 +1259,12 @@ function pickUpItem(idx) {
         addLog(`골드 +${amount} G`);
     } else if(item.type===TILES.CHEST){
         screenEffect('green');
+        // 운명의 패: 미보유 시 15% 확률 드롭
+        if(!p.fateToken && Math.random()<0.15){
+            p.fateToken=true;
+            addLog('✨ [운명의 패] 획득! 선택지가 4개로 확장됩니다.');
+            floatText('운명의 패!','#ff00ff');
+        }
         triggerSelection("📦 보물 상자를 발견했습니다!");
     }
     gameState.items.splice(idx,1);
@@ -1239,6 +1326,13 @@ window.addEventListener('keydown', e=>{
     }
 
     const num=parseInt(e.key); // 숫자키 1~4
+
+    // ── 보스 경고 ──
+    if(document.getElementById('boss-warn-overlay').style.display==='flex'){
+        if(num===1||e.key==='Enter') bossFightConfirm();
+        else if(num===2||e.key==='Escape') bossRetreat();
+        return;
+    }
 
     // ── 사망 화면 ──
     if(document.getElementById('death-screen').style.display==='flex'){
