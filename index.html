@@ -290,17 +290,25 @@
         min-width: unset; min-height: unset; padding: 6px;
         flex: 1; overflow: hidden;
     }
-    #sidebar { display: none; } /* 모바일에서 사이드바 숨김 */
+    #sidebar { display: none; }
     #mobile-controls { display: block; }
-    /* 모바일 상단 미니 스탯바 */
     #mobile-statbar {
         display: flex; gap: 8px; padding: 4px 8px;
         background: #0a0a0a; border-bottom: 1px solid #333;
         font-size: 11px; color: #ccc; flex-shrink: 0;
         justify-content: space-between;
     }
-    .overlay-base { position: fixed; }
-    .start-overlay { padding: 16px !important; }
+    /* 오버레이는 D패드 위 영역만 차지 */
+    .overlay-base {
+        position: fixed !important;
+        top: 0 !important; left: 0 !important; right: 0 !important;
+        bottom: 230px !important; /* D패드 높이만큼 비움 */
+        overflow-y: auto !important;
+        padding: 16px 12px !important;
+    }
+    .start-overlay { bottom: 0 !important; } /* 시작화면은 전체 덮기 */
+    .card { padding: 10px 8px !important; font-size: 13px !important; }
+    .choice-btn { padding: 10px !important; font-size: 13px !important; }
 }
     </style>
 </head>
