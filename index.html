@@ -278,18 +278,43 @@
 #dpad-wait  { grid-area: wait; font-size: 12px; color: #888; }
 
 @media (max-width: 768px), (pointer: coarse) {
+    body { justify-content: flex-start; overflow: hidden; }
+    #game-wrapper { width: 100vw; max-width: 100vw; height: 100dvh; display: flex; flex-direction: column; gap: 0; }
+    #main-container {
+        flex-direction: column; padding: 4px; gap: 4px;
+        border: none; border-radius: 0; max-height: none;
+        flex: 1; overflow: hidden;
+    }
+    #screen {
+        font-size: 10px; line-height: 1.05; letter-spacing: 0.5px;
+        min-width: unset; min-height: unset; padding: 6px;
+        flex: 1; overflow: hidden;
+    }
+    #sidebar { display: none; } /* 모바일에서 사이드바 숨김 */
     #mobile-controls { display: block; }
-    #game-wrapper { padding-bottom: 220px; }
-    #main-container { flex-direction: column; padding: 8px; gap: 8px; }
-    #screen { font-size: 11px; min-width: unset; }
-    #sidebar { width: 100% !important; grid-template-columns: 1fr 1fr; }
-    #minimap { width: 100% !important; }
+    /* 모바일 상단 미니 스탯바 */
+    #mobile-statbar {
+        display: flex; gap: 8px; padding: 4px 8px;
+        background: #0a0a0a; border-bottom: 1px solid #333;
+        font-size: 11px; color: #ccc; flex-shrink: 0;
+        justify-content: space-between;
+    }
+    .overlay-base { position: fixed; }
     .start-overlay { padding: 16px !important; }
 }
     </style>
 </head>
 <body>
 <div id="game-wrapper">
+    <!-- 모바일 전용 미니 스탯바 -->
+    <div id="mobile-statbar" style="display:none;">
+        <span>❤ <span id="m-hp">-</span></span>
+        <span>⚔ <span id="m-atk">-</span></span>
+        <span>🛡 <span id="m-def">-</span></span>
+        <span>💰 <span id="m-gold">-</span></span>
+        <span>B<span id="m-floor">1</span></span>
+        <span>Lv<span id="m-lv">1</span></span>
+    </div>
     <div id="main-container">
         <div id="screen">
             <div id="qte-display">
@@ -1448,6 +1473,17 @@ function updateUI() {
         if(!p2.techniques || p2.techniques.length === 0) { techEl.textContent = '없음'; }
         else { techEl.innerHTML = p2.techniques.map(id => { const t = ALL_TECHNIQUES.find(x=>x.id===id); return t ? `<div style="font-size:11px;margin:2px 0"><span style="color:#fa0">${t.seqDisp}</span> ${t.name}</div>` : ''; }).join(''); }
     }
+    // 모바일 미니 스탯바
+    const mBar = document.getElementById('mobile-statbar');
+    if(mBar && mBar.style.display !== 'none') {
+        const set = (id, v) => { const e=document.getElementById(id); if(e) e.innerText=v; };
+        set('m-hp', `${Math.floor(p.hp)}/${p.maxHp}`);
+        set('m-atk', p.baseAtk+p.bonusAtk);
+        set('m-def', p.baseDef+p.bonusDef);
+        set('m-gold', p.gold);
+        set('m-floor', gameState.floorNum);
+        set('m-lv', p.lv);
+    }
 }
 
 function render() {
@@ -1952,8 +1988,9 @@ function initMobileControls() {
         btn.addEventListener('touchstart', e => { e.preventDefault(); mobileTap(key); }, { passive: false });
         btn.addEventListener('mousedown',  e => { e.preventDefault(); mobileTap(key); });
     });
-    if (navigator.maxTouchPoints > 0 || 'ontouchstart' in window) {
+    if (navigator.maxTouchPoints > 0 || 'ontouchstart' in window || window.innerWidth <= 768) {
         document.getElementById('mobile-controls').style.display = 'block';
+        document.getElementById('mobile-statbar').style.display = 'flex';
     }
     // 시작 화면 탭으로 닫기
     const startOv = document.getElementById('start-overlay');
