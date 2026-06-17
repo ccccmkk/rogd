@@ -1055,7 +1055,7 @@ function render() {
         for(let x=0;x<gameState.currentWidth;x++){
             const dist=Math.sqrt((x-p.x)**2+(y-p.y)**2);
             if(!gameState.debugMap&&dist>p.viewDistance){out+=`<span style="color:#0a0a0a"> </span>`;continue;}
-            let char=gameState.map[y][x], color='#333';
+            let char=gameState.map[y][x], color='#666';
             const monster=gameState.monsters.find(m=>m.x===x&&m.y===y);
             const item=gameState.items.find(i=>i.x===x&&i.y===y);
             const shop=gameState.shops.find(s=>s.x===x&&s.y===y);
@@ -1073,7 +1073,7 @@ function render() {
             else if(gameState.shortcut&&x===gameState.shortcut.x&&y===gameState.shortcut.y){char=TILES.SHORTCUT;color='var(--shortcut-color)';}
             else if(!gameState.bossActive&&x===gameState.stairs.x&&y===gameState.stairs.y){char=TILES.STAIRS;color='#00aaff';}
             else if(item){char=item.type;color=item.type===TILES.GOLD?'#ffff00':'var(--accent-color)';}
-            else if(char===TILES.FLOOR) color='#1a1a1a';
+            else if(char===TILES.FLOOR) color='#2a2a2a';
             out+=`<span style="color:${color}">${char}</span>`;
         }
         out+='\n';
