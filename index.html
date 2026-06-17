@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>던전 오디세이: 30층의 여정</title>
     <style>
         :root {
@@ -239,6 +239,53 @@
             font-family: monospace; font-size: 16px; padding: 6px 10px;
             width: 120px; text-align: center; outline: none; margin: 0 8px;
         }
+
+/* ── 모바일 ── */
+#mobile-controls {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.85);
+    padding: 10px 0 20px;
+    z-index: 500;
+    touch-action: none;
+}
+#dpad {
+    display: grid;
+    grid-template-areas: ". up ." "left wait right" ". down .";
+    grid-template-columns: 60px 60px 60px;
+    grid-template-rows: 60px 60px 60px;
+    gap: 4px;
+    margin: 0 auto;
+    width: fit-content;
+}
+.dpad-btn {
+    background: #1a1a1a;
+    border: 1px solid #444;
+    color: #fff;
+    font-size: 22px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    touch-action: manipulation;
+}
+.dpad-btn:active { background: #333; border-color: #0f0; }
+#dpad-up    { grid-area: up; }
+#dpad-down  { grid-area: down; }
+#dpad-left  { grid-area: left; }
+#dpad-right { grid-area: right; }
+#dpad-wait  { grid-area: wait; font-size: 12px; color: #888; }
+
+@media (max-width: 768px), (pointer: coarse) {
+    #mobile-controls { display: block; }
+    #game-wrapper { padding-bottom: 220px; }
+    #main-container { flex-direction: column; padding: 8px; gap: 8px; }
+    #screen { font-size: 11px; min-width: unset; }
+    #sidebar { width: 100% !important; grid-template-columns: 1fr 1fr; }
+    #minimap { width: 100% !important; }
+    .start-overlay { padding: 16px !important; }
+}
     </style>
 </head>
 <body>
@@ -460,6 +507,15 @@
 <div id="floor-banner">
     <div class="floor-num" id="floor-banner-num">B1</div>
     <div class="floor-sub" id="floor-banner-sub">DEPTH 1</div>
+</div>
+<div id="mobile-controls">
+    <div id="dpad">
+        <button class="dpad-btn" id="dpad-up">▲</button>
+        <button class="dpad-btn" id="dpad-left">◀</button>
+        <button class="dpad-btn" id="dpad-wait">대기</button>
+        <button class="dpad-btn" id="dpad-right">▶</button>
+        <button class="dpad-btn" id="dpad-down">▼</button>
+    </div>
 </div>
 <div id="debug-console">CMD: <input type="text" id="debug-input"></div>
 
@@ -1867,7 +1923,41 @@ window.addEventListener('keydown', e=>{
     }
 });
 
-window.onload=resetGame;
+// ── 모바일 터치 컨트롤 ──
+function mobileTap(key) {
+    if (document.getElementById('start-overlay').style.display !== 'none') {
+        document.getElementById('start-overlay').style.display = 'none';
+        resetGame();
+        return;
+    }
+    if (document.getElementById('death-screen').style.display === 'flex') return;
+    if (gameState.isPaused || gameState.isGameOver) return;
+    if (key === 'ArrowUp')    handleMove(0,-1);
+    else if (key === 'ArrowDown')  handleMove(0,1);
+    else if (key === 'ArrowLeft')  handleMove(-1,0);
+    else if (key === 'ArrowRight') handleMove(1,0);
+    else if (key === 'Space') { tick(); updateUI(); render(); }
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(key)) pushInput(key);
+}
+
+function initMobileControls() {
+    const map = {
+        'dpad-up': 'ArrowUp', 'dpad-down': 'ArrowDown',
+        'dpad-left': 'ArrowLeft', 'dpad-right': 'ArrowRight',
+        'dpad-wait': 'Space'
+    };
+    Object.entries(map).forEach(([id, key]) => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.addEventListener('touchstart', e => { e.preventDefault(); mobileTap(key); }, { passive: false });
+        btn.addEventListener('mousedown',  e => { e.preventDefault(); mobileTap(key); });
+    });
+    if (navigator.maxTouchPoints > 0 || 'ontouchstart' in window) {
+        document.getElementById('mobile-controls').style.display = 'block';
+    }
+}
+
+window.onload = function() { resetGame(); initMobileControls(); };
 </script>
 </body>
 </html>
