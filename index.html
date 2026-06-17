@@ -41,9 +41,13 @@
             min-width: 400px; min-height: 300px; position: relative;
         }
         #sidebar {
-            width: 320px; display: flex; flex-direction: column;
-            gap: 10px; overflow-y: auto;
+            width: 460px; display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-auto-rows: min-content;
+            gap: 8px; overflow-y: auto; align-content: start;
         }
+        #sidebar > #log,
+        #sidebar > .sidebar-full { grid-column: 1 / -1; }
         .stat-box { border: 1px solid var(--border-color); padding: 10px; background: #0a0a0a; font-size: 13px; }
         .stat-header {
             color: #fff; border-bottom: 1px solid #444;
@@ -287,16 +291,16 @@
                 <span class="stat-header">● 보유 강화 효과</span>
                 <div id="perk-list">없음</div>
             </div>
-            <div class="stat-box">
+            <div class="stat-box sidebar-full">
               <span class="stat-header">● 미니맵</span>
-              <canvas id="minimap" width="130" height="85" style="border:1px solid #333;margin-top:4px;display:block;image-rendering:pixelated;"></canvas>
+              <canvas id="minimap" width="220" height="90" style="border:1px solid #333;margin-top:4px;display:block;width:100%;image-rendering:pixelated;"></canvas>
               <div style="font-size:10px;color:#555;margin-top:2px;">⬜플레이어 &nbsp;🟦계단 &nbsp;🟩상점</div>
             </div>
             <div class="stat-box">
                 <span class="stat-header">● 보유 기술 <span style="color:#555;font-weight:normal;font-size:10px;">(방향키 시퀀스)</span></span>
                 <div id="tech-list" style="color:#555;font-size:11px;">없음</div>
             </div>
-            <div class="stat-box">
+            <div class="stat-box sidebar-full">
                 <span class="stat-header">● 탐험 진행도</span>
                 <div class="stat-line"><span>현재 층:</span> <span id="floor">B1 / B30</span></div>
                 <div class="stat-line"><span>골드:</span> <span id="gold">0</span></div>
@@ -307,8 +311,8 @@
                     <div class="boss-hp-container"><div id="boss-hp-fill" class="boss-hp-bar"></div></div>
                 </div>
             </div>
-            <div id="log"></div>
-            <div style="font-size:10px;color:#555;text-align:center;">저장/불러오기: '.' 키 | 대기: Space</div>
+            <div id="log" class="sidebar-full"></div>
+            <div class="sidebar-full" style="font-size:10px;color:#555;text-align:center;">저장/불러오기: '.' 키 | 대기: Space</div>
         </div>
     </div>
 
