@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>던전 오디세이: 100층의 여정</title>
+    <title>던전 오디세이: 30층의 여정</title>
     <style>
         :root {
             --bg-color: #050505;
@@ -288,12 +288,17 @@
                 <div id="perk-list">없음</div>
             </div>
             <div class="stat-box">
+              <span class="stat-header">● 미니맵</span>
+              <canvas id="minimap" width="130" height="85" style="border:1px solid #333;margin-top:4px;display:block;image-rendering:pixelated;"></canvas>
+              <div style="font-size:10px;color:#555;margin-top:2px;">⬜플레이어 &nbsp;🟦계단 &nbsp;🟩상점</div>
+            </div>
+            <div class="stat-box">
                 <span class="stat-header">● 보유 기술 <span style="color:#555;font-weight:normal;font-size:10px;">(방향키 시퀀스)</span></span>
                 <div id="tech-list" style="color:#555;font-size:11px;">없음</div>
             </div>
             <div class="stat-box">
                 <span class="stat-header">● 탐험 진행도</span>
-                <div class="stat-line"><span>현재 층:</span> <span id="floor">B1 / B100</span></div>
+                <div class="stat-line"><span>현재 층:</span> <span id="floor">B1 / B30</span></div>
                 <div class="stat-line"><span>골드:</span> <span id="gold">0</span></div>
                 <div class="stat-line"><span>세이브 지점:</span> <span id="save-point">B1</span></div>
                 <div class="stat-line"><span>부활 횟수:</span> <span id="death-count">0</span></div>
@@ -357,7 +362,7 @@
     <!-- 시작 화면 -->
     <div id="start-overlay" class="overlay-base start-overlay" style="padding:24px 20px;justify-content:flex-start;">
         <h1 style="color:var(--text-color);font-size:26px;margin-bottom:4px;text-shadow:0 0 10px var(--text-color);text-align:center;width:100%;">⚔ 던전 오디세이</h1>
-        <p style="color:#aaa;font-size:12px;text-align:center;margin-bottom:14px;width:100%;">100층 깊이의 던전을 탐험하라</p>
+        <p style="color:#aaa;font-size:12px;text-align:center;margin-bottom:14px;width:100%;">30층 깊이의 던전을 탐험하라</p>
 
         <!-- 페이지 탭 -->
         <div style="display:flex;gap:6px;margin-bottom:12px;width:100%;">
@@ -394,14 +399,12 @@
             <div class="guide-box">
                 <p style="color:#fff;font-size:14px;margin-bottom:8px;border-bottom:1px solid #444;padding-bottom:4px;">🗺 구역별 안내</p>
                 <div style="line-height:2;font-size:12.5px;">
-                    <span style="color:#7cf">B1~B10</span> &nbsp;초원의 동굴 — 슬라임, 박쥐<br>
-                    <span style="color:#7cf">B11~B20</span> 고블린 소굴 — 고블린, 늑대 &nbsp;<span style="color:#f88">★B20 보스</span><br>
-                    <span style="color:#fa0">B21~B30</span> 화염 용암굴 — 오크, 불도마뱀<br>
-                    <span style="color:#fa0">B31~B40</span> 강철 요새 — 기사, 트롤 &nbsp;<span style="color:#f88">★B40 보스</span><br>
-                    <span style="color:#f88">B41~B50</span> 마법사의 탑 — 마법사, 고스트<br>
-                    <span style="color:#f88">B51~B60</span> 어둠의 숲 — 뱀파이어, 악마 &nbsp;<span style="color:#f88">★B60 보스</span><br>
-                    <span style="color:#f0f">B61~B80</span> 용의 둥지/궁전 — 드래곤, 리치 &nbsp;<span style="color:#f88">★B80 보스</span><br>
-                    <span style="color:#fff">B81~B100</span> 신계의 관문 — 최강의 적 &nbsp;<span style="color:#fa0">★B100 최종</span>
+                    <span style="color:#7cf">B1~B5</span> &nbsp;&nbsp;초원의 동굴 — 슬라임, 박쥐<br>
+                    <span style="color:#7cf">B6~B10</span> &nbsp;고블린 소굴 — 고블린, 늑대 &nbsp;<span style="color:#f88">★B10 보스</span><br>
+                    <span style="color:#fa0">B11~B15</span> 화염 용암굴 — 오크, 불도마뱀<br>
+                    <span style="color:#fa0">B16~B20</span> 강철 요새 — 기사, 트롤 &nbsp;<span style="color:#f88">★B20 보스</span><br>
+                    <span style="color:#f88">B21~B25</span> 어둠의 숲 — 뱀파이어, 악마<br>
+                    <span style="color:#fff">B26~B30</span> 신계의 정점 — 최강의 적 &nbsp;<span style="color:#fa0">★B30 최종</span>
                 </div>
             </div>
             <div class="guide-box" style="margin-top:10px;">
@@ -454,7 +457,9 @@
 
 <script>
 // ─── 상수 ───
-const MAX_WIDTH = 65, MAX_HEIGHT = 30;
+const MAX_WIDTH = 70, MAX_HEIGHT = 42;
+const VIEWPORT_W = 42, VIEWPORT_H = 24;
+const VIEWPORT_H = 24;
 const TILES = { WALL:'#', FLOOR:'.', PLAYER:'@', STAIRS:'>', GOLD:'$', CHEST:'?', SHOP:'S', SHORTCUT:'H', VOID:' ' };
 
 // ─── 퍽 목록 (저장 호환: 인덱스 유지, 끝에 추가) ───
@@ -488,10 +493,8 @@ const ALL_TECHNIQUES = [
     // 비전투 기술
     { id:'sense',    name:'마법 감지',     seq:['ArrowDown','ArrowDown'],                            type:'utility', seqDisp:'↓↓',    desc:'5턴간 시야+5, 아이템 강조' },
     { id:'stealth',  name:'그림자 발걸음', seq:['ArrowLeft','ArrowRight','ArrowLeft'],               type:'utility', seqDisp:'←→←',   desc:'5턴간 몬스터 이동 정지' },
-    { id:'meditate', name:'명상',          seq:['ArrowUp','ArrowUp','ArrowDown','ArrowDown'],        type:'utility', seqDisp:'↑↑↓↓',  desc:'최대 HP 30% 즉시 회복' },
     { id:'scan',     name:'보물 탐지',     seq:['ArrowRight','ArrowDown','ArrowLeft','ArrowUp'],     type:'utility', seqDisp:'→↓←↑',  desc:'5턴간 전체 맵 아이템 표시' },
     { id:'taunt',    name:'도발',          seq:['ArrowRight','ArrowRight','ArrowLeft'],              type:'utility', seqDisp:'→→←',   desc:'주변 몬스터 3턴 스턴' },
-    { id:'sprint',   name:'전력 질주',     seq:['ArrowUp','ArrowUp'],                               type:'utility', seqDisp:'↑↑',    desc:'골드 감지 — 층의 골드 위치 공개' },
 ];
 
 // 입력 버퍼
@@ -716,7 +719,7 @@ let gameState = {
             addLog("스탯을 유지한 채 1층에서 다시 시작합니다.");
         } else if (mode === 'checkpoint') {
             this.deathCount++; this.floorNum = this.savePointFloor;
-            this.isBossClearedAtSavePoint = (this.floorNum % 20 === 0);
+            this.isBossClearedAtSavePoint = (this.floorNum % 10 === 0);
             this.player.hp = this.player.maxHp;
             addLog(`B${this.savePointFloor}에서 여정을 재개합니다.`);
         }
@@ -755,7 +758,7 @@ function calcPower(p) {
     return Math.floor(p.maxHp * 0.4) + (p.baseAtk + p.bonusAtk) * 4 + (p.baseDef + p.bonusDef) * 7;
 }
 function bossPower(floor) {
-    return floor * 55;
+    return floor * 180;
 }
 
 // ─── 리셋 확인 ───
@@ -796,7 +799,7 @@ function showBossWarning() {
     const f = gameState.floorNum;
     const myPow = calcPower(gameState.player);
     const recPow = bossPower(f);
-    const bossNames = {20:'점액 군주 그로그', 40:'강철 골렘 아이언클래드', 60:'대마법사 말켄', 80:'용왕 이그니스', 100:'신계의 수호자 아에온'};
+    const bossNames = {10:'점액 군주 그로그', 20:'용왕 이그니스', 30:'신계의 수호자 아에온'};
     const ratio = myPow / recPow;
     let msg, color;
     if (ratio >= 1.2)      { msg = '✅ 충분한 전투력입니다!';         color = '#33ff33'; }
@@ -835,15 +838,11 @@ function bossRetreat() {
 
 // ─── 층 전환 배너 ───
 function getZoneName(f) {
-    if (f <= 10)  return '초원의 동굴';
-    if (f <= 20)  return '고블린 소굴';
-    if (f <= 30)  return '화염 용암굴';
-    if (f <= 40)  return '강철 요새';
-    if (f <= 50)  return '마법사의 탑';
-    if (f <= 60)  return '어둠의 숲';
-    if (f <= 70)  return '용의 둥지';
-    if (f <= 80)  return '용왕의 궁전';
-    if (f <= 90)  return '신계의 관문';
+    if (f <= 5)  return '초원의 동굴';
+    if (f <= 10) return '고블린 소굴';
+    if (f <= 15) return '화염 용암굴';
+    if (f <= 20) return '강철 요새';
+    if (f <= 25) return '어둠의 숲';
     return '신계의 정점';
 }
 function showFloorBanner() {
@@ -851,7 +850,7 @@ function showFloorBanner() {
     const banner = document.getElementById('floor-banner');
     const numEl = document.getElementById('floor-banner-num');
     const subEl = document.getElementById('floor-banner-sub');
-    const isBoss = (f % 20 === 0);
+    const isBoss = (f % 10 === 0);
     numEl.innerText = `B${f}`;
     subEl.innerText = isBoss ? `⚠ BOSS: ${getZoneName(f)} ⚠` : getZoneName(f);
     banner.className = isBoss ? 'boss-floor show' : 'show';
@@ -958,12 +957,13 @@ function resetGame() {
 }
 
 function generateFloor() {
-    gameState.currentWidth  = Math.min(MAX_WIDTH,  30 + Math.floor(gameState.floorNum/3));
-    gameState.currentHeight = Math.min(MAX_HEIGHT, 15 + Math.floor(gameState.floorNum/6));
+    gameState.currentWidth  = 60;
+    gameState.currentHeight = 38;
     gameState.map = Array.from({length:gameState.currentHeight},()=>Array(gameState.currentWidth).fill(TILES.WALL));
     gameState.monsters=[]; gameState.items=[]; gameState.shops=[]; gameState.gamblers=[];
     gameState.bossActive=false; gameState.boss=null; gameState.shortcut=null;
-    if (gameState.floorNum % 20 === 0) {
+    gameState.explored=Array.from({length:gameState.currentHeight},()=>new Array(gameState.currentWidth).fill(false));
+    if (gameState.floorNum % 10 === 0) {
         // 보스 층: 맵만 준비, 경고 오버레이를 showBossWarning에서 처리
         showBossWarning();
     } else {
@@ -1022,6 +1022,7 @@ function generateNormalFloor() {
         const r=rooms[Math.floor(rooms.length/2)];
         gameState.gamblers.push({x:r.cx, y:r.cy+1});
     }
+    gameState.explored = Array.from({length:gameState.currentHeight}, ()=>new Array(gameState.currentWidth).fill(false));
 }
 
 function generateBossFloor() {
@@ -1036,11 +1037,9 @@ function generateBossFloor() {
         const f=gameState.floorNum;
         let b={x:Math.floor(gameState.currentWidth/2), y:Math.floor(gameState.currentHeight/2), size:2,
                hp:f*55, maxHp:f*55, def:f*0.45, name:"", char:"B"};
-        if (f===20)  { b.name="점액 군주 그로그";       b.size=2; b.char="K"; b.ability="split"; }
-        else if (f===40) { b.name="강철 골렘 아이언클래드"; b.size=3; b.char="G"; b.hp*=1.3; b.def*=1.3; }
-        else if (f===60) { b.name="대마법사 말켄";        b.size=2; b.char="E"; b.ability="teleport"; }
-        else if (f===80) { b.name="용왕 이그니스";        b.size=3; b.char="J"; b.ability="summon"; }
-        else if (f===100){ b.name="신계의 수호자 아에온"; b.size=4; b.char="X"; b.hp*=2.5; b.def*=1.8; b.ability="all"; }
+        if (f===10)  { b.name="점액 군주 그로그"; b.size=2; b.char="K"; b.ability="split"; }
+        else if (f===20) { b.name="용왕 이그니스"; b.size=3; b.char="J"; b.hp*=1.5; b.def*=1.3; b.ability="summon"; }
+        else if (f===30) { b.name="신계의 수호자 아에온"; b.size=4; b.char="X"; b.hp*=2.5; b.def*=1.8; b.ability="all"; }
         b.maxHp=b.hp;
         gameState.boss=b; gameState.bossActive=true;
         document.getElementById('screen').classList.add('boss-active-pulse');
@@ -1049,6 +1048,7 @@ function generateBossFloor() {
         gameState.bossActive=false;
         gameState.shops.push({x:Math.floor(gameState.currentWidth/2), y:Math.floor(gameState.currentHeight/2)});
     }
+    gameState.explored = Array.from({length:gameState.currentHeight}, ()=>new Array(gameState.currentWidth).fill(false));
 }
 
 function spawnMonster(x, y, pool) {
@@ -1102,7 +1102,7 @@ function handleMove(dx, dy) {
 
     // 계단
     if (!gameState.bossActive&&nx===gameState.stairs.x&&ny===gameState.stairs.y) {
-        if (gameState.floorNum===100) { winGame(); return; }
+        if (gameState.floorNum===30) { winGame(); return; }
         gameState.floorNum++;
         generateFloor();
         showFloorBanner();
@@ -1354,7 +1354,7 @@ function updateUI() {
         'hp':`${Math.floor(p.hp)} / ${p.maxHp}`,
         'atk-base':p.baseAtk, 'atk-bonus':`(+${p.bonusAtk})`,
         'def-base':p.baseDef, 'def-bonus':`(+${p.bonusDef})`,
-        'gold':p.gold, 'floor':`B${gameState.floorNum} / 100`,
+        'gold':p.gold, 'floor':`B${gameState.floorNum} / 30`,
         'save-point':`B${gameState.savePointFloor}`,
         'death-count':gameState.deathCount,
         'turn-count':gameState.turn
@@ -1388,11 +1388,18 @@ function updateUI() {
 
 function render() {
     const screen=document.getElementById('screen'), p=gameState.player;
+    const camX=Math.max(0,Math.min(p.x-Math.floor(VIEWPORT_W/2),gameState.currentWidth-VIEWPORT_W));
+    const camY=Math.max(0,Math.min(p.y-Math.floor(VIEWPORT_H/2),gameState.currentHeight-VIEWPORT_H));
+    gameState.camX=camX; gameState.camY=camY;
     let out='';
-    for(let y=0;y<gameState.currentHeight;y++){
-        for(let x=0;x<gameState.currentWidth;x++){
+    for(let vy=0;vy<VIEWPORT_H;vy++){
+        const y=camY+vy;
+        for(let vx=0;vx<VIEWPORT_W;vx++){
+            const x=camX+vx;
+            if(y<0||y>=gameState.currentHeight||x<0||x>=gameState.currentWidth){out+=`<span style="color:#000"> </span>`;continue;}
             const dist=Math.sqrt((x-p.x)**2+(y-p.y)**2);
             if(!gameState.debugMap&&dist>p.viewDistance){out+=`<span style="color:#0a0a0a"> </span>`;continue;}
+            if(gameState.explored) gameState.explored[y][x]=true;
             let char=gameState.map[y][x], color='#666';
             const monster=gameState.monsters.find(m=>m.x===x&&m.y===y);
             const item=gameState.items.find(i=>i.x===x&&i.y===y);
@@ -1418,35 +1425,66 @@ function render() {
     }
     screen.innerHTML=out;
     renderHpBars(screen, p);
+    drawMinimap();
 }
 
 function renderHpBars(screen, p) {
     screen.querySelectorAll('.m-hpbar').forEach(e=>e.remove());
-    // measure one character cell size
-    const tmp = document.createElement('span');
-    tmp.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;';
-    tmp.textContent = 'X';
+    const camX=gameState.camX||0, camY=gameState.camY||0;
+    const tmp=document.createElement('span');
+    tmp.style.cssText='position:absolute;visibility:hidden;white-space:pre;';
+    tmp.textContent='X';
     screen.appendChild(tmp);
-    const cw = tmp.offsetWidth || 10;
-    const ch = tmp.offsetHeight || 15;
+    const cw=tmp.offsetWidth||10, ch=tmp.offsetHeight||15;
     tmp.remove();
-    const pad = 15; // #screen padding
-    gameState.monsters.forEach(m => {
-        const dist = Math.sqrt((m.x-p.x)**2+(m.y-p.y)**2);
-        if(dist > p.viewDistance || m.hp <= 0) return;
-        const pct = Math.max(0, m.hp / m.maxHp);
-        const bar = document.createElement('div');
-        bar.className = 'm-hpbar';
-        bar.style.cssText = `position:absolute;pointer-events:none;` +
-            `left:${pad + m.x*cw - 1}px;` +
-            `top:${pad + m.y*ch - 5}px;` +
-            `width:${cw+2}px;height:3px;background:#400;border-radius:1px;`;
-        const fill = document.createElement('div');
-        fill.style.cssText = `width:${Math.round(pct*100)}%;height:100%;border-radius:1px;` +
-            `background:${pct>0.5?'#0c0':pct>0.25?'#fa0':'#f33'};`;
+    const pad=15;
+    gameState.monsters.forEach(m=>{
+        const sx=m.x-camX, sy=m.y-camY;
+        if(sx<0||sx>=VIEWPORT_W||sy<0||sy>=VIEWPORT_H) return;
+        const dist=Math.sqrt((m.x-p.x)**2+(m.y-p.y)**2);
+        if(dist>p.viewDistance||m.hp<=0) return;
+        const pct=Math.max(0,m.hp/m.maxHp);
+        const bar=document.createElement('div');
+        bar.className='m-hpbar';
+        bar.style.cssText=`position:absolute;pointer-events:none;left:${pad+sx*cw-1}px;top:${pad+sy*ch-5}px;width:${cw+2}px;height:3px;background:#400;border-radius:1px;`;
+        const fill=document.createElement('div');
+        fill.style.cssText=`width:${Math.round(pct*100)}%;height:100%;border-radius:1px;background:${pct>0.5?'#0c0':pct>0.25?'#fa0':'#f33'};`;
         bar.appendChild(fill);
         screen.appendChild(bar);
     });
+}
+
+function drawMinimap() {
+    const canvas=document.getElementById('minimap');
+    if(!canvas||!gameState.explored) return;
+    const ctx=canvas.getContext('2d');
+    const W=gameState.currentWidth, H=gameState.currentHeight;
+    const cw=canvas.width/W, ch=canvas.height/H;
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    for(let y=0;y<H;y++){
+        for(let x=0;x<W;x++){
+            if(!gameState.explored[y][x]) continue;
+            ctx.fillStyle=gameState.map[y][x]==='#'?'#3a3a3a':'#1a1a1a';
+            ctx.fillRect(x*cw,y*ch,cw,ch);
+        }
+    }
+    gameState.items.forEach(i=>{
+        if(!gameState.explored[i.y]?.[i.x]) return;
+        ctx.fillStyle=i.type==='$'?'#cc0':'#07f';
+        ctx.fillRect(i.x*cw,i.y*ch,Math.max(2,cw),Math.max(2,ch));
+    });
+    (gameState.shops||[]).forEach(s=>{
+        if(!gameState.explored[s.y]?.[s.x]) return;
+        ctx.fillStyle='#0a0';
+        ctx.fillRect(s.x*cw,s.y*ch,Math.max(2,cw),Math.max(2,ch));
+    });
+    if(gameState.stairs&&!gameState.bossActive){
+        const s=gameState.stairs;
+        if(gameState.explored[s.y]?.[s.x]){ctx.fillStyle='#0af';ctx.fillRect(s.x*cw,s.y*ch,Math.max(2,cw),Math.max(2,ch));}
+    }
+    const p=gameState.player;
+    ctx.fillStyle='#fff';
+    ctx.fillRect(p.x*cw-1,p.y*ch-1,Math.max(3,cw+2),Math.max(3,ch+2));
 }
 
 // ─── 강화 선택 ───
@@ -1720,7 +1758,7 @@ window.addEventListener('keydown', e=>{
             if(v==='gold') gameState.player.gold+=10000;
             if(v==='pow'){gameState.player.baseAtk+=1000;gameState.player.baseDef+=1000;addLog("[DEBUG] 파워 폭발!");}
             if(v.startsWith('exp ')){const a=parseInt(v.split(' ')[1]);if(!isNaN(a)){gameState.player.xp+=a;checkLevelUp();}}
-            if(v==='skip'){gameState.floorNum=Math.min(100,gameState.floorNum+19);generateFloor();}
+            if(v==='skip'){gameState.floorNum=Math.min(30,gameState.floorNum+9);generateFloor();}
             e.target.value='';
             document.getElementById('debug-console').style.display='none';
             gameState.isPaused=false; render(); updateUI();
