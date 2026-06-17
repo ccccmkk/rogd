@@ -356,46 +356,66 @@
     </div>
 
     <!-- 시작 화면 -->
-    <div id="start-overlay" class="overlay-base start-overlay" style="overflow-y:auto;padding:30px 20px;">
-        <h1 style="color:var(--text-color);font-size:28px;margin-bottom:6px;text-shadow:0 0 10px var(--text-color);text-align:center;">⚔ 던전 오디세이</h1>
-        <p style="color:#aaa;font-size:13px;text-align:center;margin-bottom:18px;">100층 깊이의 던전을 탐험하라</p>
+    <div id="start-overlay" class="overlay-base start-overlay" style="padding:24px 20px;justify-content:flex-start;">
+        <h1 style="color:var(--text-color);font-size:26px;margin-bottom:4px;text-shadow:0 0 10px var(--text-color);text-align:center;width:100%;">⚔ 던전 오디세이</h1>
+        <p style="color:#aaa;font-size:12px;text-align:center;margin-bottom:14px;width:100%;">100층 깊이의 던전을 탐험하라</p>
 
-        <div class="guide-box" style="margin-bottom:12px;">
-            <p style="color:#fff;font-size:15px;margin-bottom:10px;border-bottom:1px solid #444;padding-bottom:5px;">📖 게임 방법</p>
-            <div style="line-height:2;font-size:13px;color:#ccc;">
-                <span style="color:#7af">@</span> 를 조작해 방향키로 이동하며 몬스터를 쓰러뜨리세요.<br>
-                몬스터와 같은 칸으로 이동하면 자동으로 전투합니다.<br>
-                <span style="color:#fa0">?</span> 상자에서 능력(퍽)이나 특수 기술을 획득할 수 있습니다.<br>
-                <span style="color:#0cf">></span> 계단을 밟으면 다음 층으로 내려갑니다.<br>
-                <span style="color:#0f0">S</span> 상점에서 능력치를 강화하고, <span style="color:#f0f">G</span> 도박사에게 운을 시험하세요.<br>
-                <span style="color:#ff0">H</span> 지름길(5층 이동)은 확인 후 선택할 수 있습니다.<br>
-                방향키를 연속 입력하면 <span style="color:#fa0">특수 기술</span>이 발동됩니다! (상자에서 습득)
+        <!-- 페이지 탭 -->
+        <div style="display:flex;gap:6px;margin-bottom:12px;width:100%;">
+            <button id="intro-tab-1" onclick="introPage(1)" style="flex:1;padding:6px;background:#1a3a1a;border:1px solid #4a4;color:#4f4;font-family:monospace;cursor:pointer;font-size:13px;">[ 게임 방법 ]</button>
+            <button id="intro-tab-2" onclick="introPage(2)" style="flex:1;padding:6px;background:#111;border:1px solid #444;color:#888;font-family:monospace;cursor:pointer;font-size:13px;">[ 구역 안내 ]</button>
+        </div>
+
+        <!-- 페이지 1: 게임 방법 + 조작 -->
+        <div id="intro-p1" style="width:100%;">
+            <div class="guide-box" style="margin-bottom:10px;">
+                <p style="color:#fff;font-size:14px;margin-bottom:8px;border-bottom:1px solid #444;padding-bottom:4px;">📖 게임 방법</p>
+                <div style="line-height:1.9;font-size:13px;color:#ccc;">
+                    <span style="color:#7af">@</span> 를 방향키로 움직이며 몬스터를 쓰러뜨리세요.<br>
+                    <span style="color:#fa0">?</span> 상자 — 능력(퍽) 또는 특수 기술 획득<br>
+                    <span style="color:#0cf">></span> 계단 — 다음 층으로 이동<br>
+                    <span style="color:#0f0">S</span> 상점 — 능력치 강화 (층당 1회)<br>
+                    <span style="color:#f0f">G</span> 도박사 — 고위험 고보상 도박<br>
+                    <span style="color:#ff0">H</span> 지름길 — 5층 이동 (확인창 표시)<br>
+                    방향키 콤보 입력 → <span style="color:#fa0">특수 기술</span> 발동!
+                </div>
+            </div>
+            <div class="guide-box">
+                <p style="color:#fff;font-size:14px;margin-bottom:8px;border-bottom:1px solid #444;padding-bottom:4px;">⌨ 조작 키</p>
+                <div style="line-height:1.9;font-size:13px;color:#ccc;">
+                    <span style="color:var(--accent-color)">방향키</span> 이동/전투 &nbsp;|&nbsp; <span style="color:var(--accent-color)">Space</span> 대기<br>
+                    <span style="color:var(--accent-color)">R</span> 리셋 확인 &nbsp;|&nbsp; <span style="color:var(--accent-color)">.</span> 저장·불러오기<br>
+                    선택지는 <span style="color:var(--accent-color)">숫자키 1~3</span> 으로 입력 가능
+                </div>
             </div>
         </div>
 
-        <div class="guide-box" style="margin-bottom:12px;">
-            <p style="color:#fff;font-size:15px;margin-bottom:10px;border-bottom:1px solid #444;padding-bottom:5px;">🗺 구역별 안내</p>
-            <div style="line-height:2;font-size:12px;">
-                <span style="color:#7cf">B1~B10</span>  &nbsp;초원의 동굴 — 약한 슬라임, 박쥐 출현<br>
-                <span style="color:#7cf">B11~B20</span> 고블린 소굴 — 고블린, 늑대 등장 / <span style="color:#f88">B20 보스</span><br>
-                <span style="color:#fa0">B21~B30</span> 화염 용암굴 — 오크, 불도마뱀 출현<br>
-                <span style="color:#fa0">B31~B40</span> 강철 요새 — 철갑 기사, 트롤 등장 / <span style="color:#f88">B40 보스</span><br>
-                <span style="color:#f88">B41~B50</span> 마법사의 탑 — 마법사, 고스트 출현<br>
-                <span style="color:#f88">B51~B60</span> 어둠의 숲 — 뱀파이어, 악마 등장 / <span style="color:#f88">B60 보스</span><br>
-                <span style="color:#f0f">B61~B80</span> 용의 둥지 — 드래곤 린, 리치 출현 / <span style="color:#f88">B80 보스</span><br>
-                <span style="color:#fff">B81~B100</span> 신계의 관문 — 최강의 적들 / <span style="color:#fa0">B100 최종 보스</span>
+        <!-- 페이지 2: 구역 안내 -->
+        <div id="intro-p2" style="width:100%;display:none;">
+            <div class="guide-box">
+                <p style="color:#fff;font-size:14px;margin-bottom:8px;border-bottom:1px solid #444;padding-bottom:4px;">🗺 구역별 안내</p>
+                <div style="line-height:2;font-size:12.5px;">
+                    <span style="color:#7cf">B1~B10</span> &nbsp;초원의 동굴 — 슬라임, 박쥐<br>
+                    <span style="color:#7cf">B11~B20</span> 고블린 소굴 — 고블린, 늑대 &nbsp;<span style="color:#f88">★B20 보스</span><br>
+                    <span style="color:#fa0">B21~B30</span> 화염 용암굴 — 오크, 불도마뱀<br>
+                    <span style="color:#fa0">B31~B40</span> 강철 요새 — 기사, 트롤 &nbsp;<span style="color:#f88">★B40 보스</span><br>
+                    <span style="color:#f88">B41~B50</span> 마법사의 탑 — 마법사, 고스트<br>
+                    <span style="color:#f88">B51~B60</span> 어둠의 숲 — 뱀파이어, 악마 &nbsp;<span style="color:#f88">★B60 보스</span><br>
+                    <span style="color:#f0f">B61~B80</span> 용의 둥지/궁전 — 드래곤, 리치 &nbsp;<span style="color:#f88">★B80 보스</span><br>
+                    <span style="color:#fff">B81~B100</span> 신계의 관문 — 최강의 적 &nbsp;<span style="color:#fa0">★B100 최종</span>
+                </div>
+            </div>
+            <div class="guide-box" style="margin-top:10px;">
+                <p style="color:#fff;font-size:14px;margin-bottom:6px;border-bottom:1px solid #444;padding-bottom:4px;">💡 팁</p>
+                <div style="line-height:1.9;font-size:12.5px;color:#ccc;">
+                    보스방 입장 전 <span style="color:#fa0">권장 전투력</span>을 확인하세요.<br>
+                    상자에서 기술 습득 후 방향키 콤보로 발동 가능.<br>
+                    운명의 패(아이템)로 선택지 4번 슬롯 해금!
+                </div>
             </div>
         </div>
 
-        <div class="guide-box" style="margin-bottom:14px;">
-            <p style="color:#fff;font-size:15px;margin-bottom:10px;border-bottom:1px solid #444;padding-bottom:5px;">⌨ 조작 키</p>
-            <div style="line-height:1.9;font-size:13px;color:#ccc;">
-                <span style="color:var(--accent-color)">방향키</span> 이동 / 전투 &nbsp;|&nbsp; <span style="color:var(--accent-color)">Space</span> 대기<br>
-                <span style="color:var(--accent-color)">R</span> 리셋 확인 &nbsp;|&nbsp; <span style="color:var(--accent-color)">.</span> 저장·불러오기
-            </div>
-        </div>
-
-        <p style="color:#fff;animation:blink 1.5s infinite;font-size:16px;text-align:center;">— 아무 키나 눌러서 시작 —</p>
+        <p style="color:#fff;animation:blink 1.5s infinite;font-size:14px;text-align:center;margin-top:14px;width:100%;">— 아무 키나 눌러서 시작 —</p>
     </div>
 
     <!-- 사망 화면 -->
@@ -905,6 +925,20 @@ const ui = {
         } catch(e) { addLog("잘못된 코드입니다."); }
     }
 };
+
+// ─── 시작화면 페이지 전환 ───
+function introPage(n) {
+    document.getElementById('intro-p1').style.display = n===1 ? '' : 'none';
+    document.getElementById('intro-p2').style.display = n===2 ? '' : 'none';
+    const t1 = document.getElementById('intro-tab-1');
+    const t2 = document.getElementById('intro-tab-2');
+    t1.style.background = n===1 ? '#1a3a1a' : '#111';
+    t1.style.borderColor = n===1 ? '#4a4' : '#444';
+    t1.style.color = n===1 ? '#4f4' : '#888';
+    t2.style.background = n===2 ? '#1a3a1a' : '#111';
+    t2.style.borderColor = n===2 ? '#4a4' : '#444';
+    t2.style.color = n===2 ? '#4f4' : '#888';
+}
 
 // ─── 층 생성 ───
 function resetGame() {
