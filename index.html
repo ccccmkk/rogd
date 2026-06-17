@@ -471,7 +471,7 @@
             </div>
         </div>
 
-        <p style="color:#fff;animation:blink 1.5s infinite;font-size:14px;text-align:center;margin-top:14px;width:100%;">— 아무 키나 눌러서 시작 —</p>
+        <p style="color:#fff;animation:blink 1.5s infinite;font-size:14px;text-align:center;margin-top:14px;width:100%;">— 아무 키나 눌러서 시작 / 화면을 탭하세요 —</p>
         </div><!-- inner wrapper -->
     </div>
 
@@ -1955,6 +1955,16 @@ function initMobileControls() {
     if (navigator.maxTouchPoints > 0 || 'ontouchstart' in window) {
         document.getElementById('mobile-controls').style.display = 'block';
     }
+    // 시작 화면 탭으로 닫기
+    const startOv = document.getElementById('start-overlay');
+    startOv.addEventListener('touchstart', e => {
+        // 탭 버튼(intro-tab-1/2)은 제외
+        if (e.target.closest('#intro-tab-1,#intro-tab-2')) return;
+        if (startOv.style.display !== 'none') {
+            startOv.style.display = 'none';
+            gameState.gameStarted = true;
+        }
+    }, { passive: true });
 }
 
 window.onload = function() { resetGame(); initMobileControls(); };
