@@ -654,6 +654,7 @@ let gameState = {
     startTime: Date.now(), deathCount: 0, savePointFloor: 1,
     isBossClearedAtSavePoint: false, currentWidth: 30, currentHeight: 15,
     gameStarted: false, turn: 0, combo: 0,
+    buffSense:0, buffStealth:0, buffScan:0, furyNext:false, qteBonus:false,
 
     restart(mode) {
         this.isGameOver = false; this.isPaused = false; this.combo = 0;
@@ -842,6 +843,7 @@ function resetGame() {
         isBossClearedAtSavePoint:false, floorNum:1, turn:0, combo:0,
         isGameOver:false, isPaused:false, debugMap:false,
         bossActive:false, gameStarted:false,
+        buffSense:0, buffStealth:0, buffScan:0, furyNext:false, qteBonus:false,
         player:gameState.createDefaultPlayer(),
         map:[], monsters:[], items:[], shops:[], gamblers:[],
         stairs:{x:0,y:0}, boss:null, shortcut:null
@@ -1049,6 +1051,8 @@ function attackBoss() {
     if (p.skills.arcane) atk += Math.floor(gameState.floorNum/8);
     let raw=atk+Math.floor(Math.random()*8);
     let dmg=Math.max(1, raw-Math.floor(b.def));
+    if(gameState.furyNext){ dmg*=5; gameState.furyNext=false; }
+    if(gameState.qteBonus){ dmg*=2; gameState.qteBonus=false; }
     let isCrit=false;
 
     // 콤보 보너스
@@ -1100,6 +1104,7 @@ function attackBoss() {
         gameState.shops.push({x:b.x,y:b.y});
         p.xp+=gameState.floorNum*70; p.gold+=gameState.floorNum*150;
         checkLevelUp();
+        const t=getRandomUnlearnedTech(); if(t) learnTechnique(t.id);
     }
 }
 
@@ -1161,8 +1166,12 @@ function tick() {
     // 재생
     const p=gameState.player;
     if (p.skills.regen&&p.hp<p.maxHp) p.hp=Math.min(p.maxHp,p.hp+p.skills.regen);
+    if(gameState.buffSense > 0) { gameState.buffSense--; if(gameState.buffSense===0){ p.viewDistance -= 5; } }
+    if(gameState.buffStealth > 0) gameState.buffStealth--;
+    if(gameState.buffScan > 0) gameState.buffScan--;
 
     // 보스 행동
+    if (gameState.bossActive && !qteState && gameState.turn % 6 === 0 && Math.random() < 0.5) startQTE();
     if (gameState.bossActive) {
         const b=gameState.boss;
         const dist=Math.max(Math.abs(b.x-p.x),Math.abs(b.y-p.y));
@@ -1191,6 +1200,9 @@ function tick() {
     }
 
     // 몬스터 행동
+    if(gameState.buffStealth > 0) {
+        // stealth: skip monster movement
+    } else {
     gameState.monsters.forEach(m=>{
         if (m.stunned) { m.stunned=false; return; }
         const adx=Math.abs(m.x-p.x), ady=Math.abs(m.y-p.y);
@@ -1215,6 +1227,7 @@ function tick() {
             }
         }
     });
+    } // end stealth check
 
     if (p.hp<=0) {
         p.hp=0; gameState.isGameOver=true; gameState.combo=0;
@@ -1260,6 +1273,12 @@ function updateUI() {
         document.getElementById('boss-name-label').innerText=`${gameState.boss.name} (DEF:${Math.floor(gameState.boss.def)})`;
         document.getElementById('boss-hp-fill').style.width=`${Math.max(0,(gameState.boss.hp/gameState.boss.maxHp)*100)}%`;
     } else if(bInfo) bInfo.style.display='none';
+    const techEl = document.getElementById('tech-list');
+    if(techEl) {
+        const p2 = gameState.player;
+        if(!p2.techniques || p2.techniques.length === 0) { techEl.textContent = '없음'; }
+        else { techEl.innerHTML = p2.techniques.map(id => { const t = ALL_TECHNIQUES.find(x=>x.id===id); return t ? `<div style="font-size:11px;margin:2px 0"><span style="color:#fa0">${t.seqDisp}</span> ${t.name}</div>` : ''; }).join(''); }
+    }
 }
 
 function render() {
@@ -1515,7 +1534,13 @@ function pickUpItem(idx) {
             addLog('✨ [운명의 패] 획득! 선택지가 4개로 확장됩니다.');
             floatText('운명의 패!','#ff00ff');
         }
-        triggerSelection("📦 보물 상자를 발견했습니다!");
+        if(Math.random()<0.25){
+            const tech=getRandomUnlearnedTech();
+            if(tech){ learnTechnique(tech.id); addLog(`📜 상자에서 기술 [${tech.name}] 습득!`); }
+            else { triggerSelection("📦 보물 상자를 발견했습니다!"); }
+        } else {
+            triggerSelection("📦 보물 상자를 발견했습니다!");
+        }
     }
     gameState.items.splice(idx,1);
 }
@@ -1654,11 +1679,13 @@ window.addEventListener('keydown', e=>{
         return;
     }
     if(gameState.isPaused||gameState.isGameOver) return;
+    const arrowKeys=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
+    if(qteState !== null && arrowKeys.includes(e.key)){ resolveQTE(e.key); return; }
     switch(e.key){
-        case 'ArrowUp':    handleMove(0,-1); break;
-        case 'ArrowDown':  handleMove(0,1);  break;
-        case 'ArrowLeft':  handleMove(-1,0); break;
-        case 'ArrowRight': handleMove(1,0);  break;
+        case 'ArrowUp':    handleMove(0,-1); pushInput(e.key); break;
+        case 'ArrowDown':  handleMove(0,1);  pushInput(e.key); break;
+        case 'ArrowLeft':  handleMove(-1,0); pushInput(e.key); break;
+        case 'ArrowRight': handleMove(1,0);  pushInput(e.key); break;
         case ' ':          tick();           break;
     }
 });
