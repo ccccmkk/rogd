@@ -125,12 +125,9 @@
         @keyframes blink { 0%{opacity:1}50%{opacity:0.3}100%{opacity:1} }
         @keyframes shake {
             0%,100%{transform:translate(0,0)}
-            15%{transform:translate(-6px,3px)}
-            30%{transform:translate(6px,-3px)}
-            45%{transform:translate(-4px,5px)}
-            60%{transform:translate(4px,-2px)}
-            75%{transform:translate(-3px,3px)}
-            90%{transform:translate(3px,-3px)}
+            25%{transform:translate(-2px,1px)}
+            50%{transform:translate(2px,-1px)}
+            75%{transform:translate(-1px,1px)}
         }
         @keyframes flash-red {
             0%{background:rgba(255,0,0,0.4)}
@@ -152,28 +149,52 @@
             0%,100%{box-shadow:0 0 0 0 rgba(255,0,255,0)}
             50%{box-shadow:0 0 20px 8px rgba(255,0,255,0.5)}
         }
-        .anim-shake { animation: shake 0.35s ease; }
+        .anim-shake { animation: shake 0.2s ease; }
         .anim-flash-red::after {
             content:''; position:absolute; inset:0;
-            animation: flash-red 0.4s ease forwards; pointer-events:none; z-index:10;
+            animation: flash-red 0.25s ease forwards; pointer-events:none; z-index:10;
+            opacity:0.35;
         }
         .anim-flash-yellow::after {
             content:''; position:absolute; inset:0;
-            animation: flash-yellow 0.35s ease forwards; pointer-events:none; z-index:10;
+            animation: flash-yellow 0.2s ease forwards; pointer-events:none; z-index:10;
+            opacity:0.3;
         }
         .anim-flash-green::after {
             content:''; position:absolute; inset:0;
-            animation: flash-green 0.4s ease forwards; pointer-events:none; z-index:10;
+            animation: flash-green 0.25s ease forwards; pointer-events:none; z-index:10;
+            opacity:0.3;
         }
         .anim-flash-purple::after {
             content:''; position:absolute; inset:0;
-            animation: flash-purple 0.5s ease forwards; pointer-events:none; z-index:10;
+            animation: flash-purple 0.3s ease forwards; pointer-events:none; z-index:10;
+            opacity:0.35;
         }
         .boss-active-pulse { animation: pulse-boss 1.2s ease infinite; }
+        /* 층 전환 연출 */
+        #floor-banner {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.88);
+            z-index: 300; pointer-events: none;
+            opacity: 0; transition: opacity 0.15s ease;
+        }
+        #floor-banner.show { opacity: 1; }
+        #floor-banner .floor-num {
+            font-size: 56px; color: var(--text-color);
+            text-shadow: 0 0 20px var(--text-color);
+            letter-spacing: 4px;
+        }
+        #floor-banner .floor-sub {
+            font-size: 14px; color: #555; margin-top: 8px; letter-spacing: 2px;
+        }
+        #floor-banner.boss-floor .floor-num { color: var(--boss-color); text-shadow: 0 0 20px var(--boss-color); }
+        #floor-banner.boss-floor .floor-sub { color: var(--boss-color); opacity: 0.6; }
         /* 플로팅 텍스트 */
         .float-text {
             position: absolute; pointer-events: none; font-weight: bold;
-            font-size: 16px; z-index: 20; animation: floatUp 0.9s ease forwards;
+            font-size: 12px; z-index: 20; animation: floatUp 0.7s ease forwards; opacity: 0.7;
         }
         @keyframes floatUp {
             0%{opacity:1;transform:translateY(0)}
@@ -328,6 +349,10 @@
     </div>
 </div>
 
+<div id="floor-banner">
+    <div class="floor-num" id="floor-banner-num">B1</div>
+    <div class="floor-sub" id="floor-banner-sub">DEPTH 1</div>
+</div>
 <div id="debug-console">CMD: <input type="text" id="debug-input"></div>
 
 <script>
@@ -417,7 +442,7 @@ let gameState = {
         }
         document.getElementById('death-screen').style.display = 'none';
         document.getElementById('win-screen').style.display = 'none';
-        generateFloor(); updateUI(); render();
+        generateFloor(); showFloorBanner(); updateUI(); render();
     },
 
     createDefaultPlayer() {
@@ -443,6 +468,19 @@ function getSaveCode() {
         return `${id}:${cnt}`;
     }).join(',');
     return encrypt(core+'|'+perks).match(/.{1,5}/g).join('-').toUpperCase();
+}
+
+// ─── 층 전환 배너 ───
+function showFloorBanner() {
+    const f = gameState.floorNum;
+    const banner = document.getElementById('floor-banner');
+    const numEl = document.getElementById('floor-banner-num');
+    const subEl = document.getElementById('floor-banner-sub');
+    const isBoss = (f % 20 === 0);
+    numEl.innerText = `B${f}`;
+    subEl.innerText = isBoss ? '⚠ BOSS FLOOR ⚠' : `DEPTH ${f}`;
+    banner.className = isBoss ? 'boss-floor show' : 'show';
+    setTimeout(() => { banner.classList.remove('show'); }, 900);
 }
 
 // ─── 시각 효과 ───
@@ -673,6 +711,7 @@ function handleMove(dx, dy) {
         if (gameState.floorNum===100) { winGame(); return; }
         gameState.floorNum++;
         generateFloor();
+        showFloorBanner();
         addLog(`B${gameState.floorNum}층으로 이동했습니다.`);
     }
     tick();
@@ -683,8 +722,7 @@ function takeShortcut() {
     const prev=gameState.floorNum;
     gameState.floorNum=Math.min(nextBoss, gameState.floorNum+5);
     addLog(`비밀 통로! ${gameState.floorNum-prev}개 층을 건너뛰었습니다!`);
-    screenEffect('green');
-    generateFloor(); updateUI(); render();
+    generateFloor(); showFloorBanner(); updateUI(); render();
 }
 
 function attackBoss() {
@@ -775,7 +813,6 @@ function combat(idx) {
 
     if (m.hp<=0) {
         addLog(`${m.name} 처치! (+${m.xp} XP)`);
-        screenEffect('shake');
         p.xp+=m.xp;
         gameState.monsters.splice(idx,1);
         checkLevelUp();
@@ -939,7 +976,9 @@ function triggerSelection(title) {
     document.getElementById('close-overlay').style.display='none';
     cont.innerHTML=''; ov.style.display='flex';
 
-    const picked=[...ALL_PERKS].sort(()=>0.5-Math.random()).slice(0,3);
+    const p3=gameState.player;
+    const hasSpecialPerk=Object.values(p3.perks).reduce((a,b)=>a+b,0)>=3;
+    const picked=[...ALL_PERKS].sort(()=>0.5-Math.random()).slice(0, hasSpecialPerk?4:3);
     picked.forEach((perk,i)=>{
         const card=document.createElement('div');
         card.className='card';
@@ -970,14 +1009,19 @@ function triggerShop() {
     goldDisp.style.display='block';
     cont.innerHTML=''; ov.style.display='flex'; close.style.display='block';
 
-    const shopItems=[
-        {name:'체력 회복',       price:50,  desc:'+60 HP',         effect:p=>{p.hp=Math.min(p.maxHp,p.hp+60);}},
-        {name:'최대 체력 증가',  price:150, desc:'MAX HP +50',     effect:p=>{p.maxHp+=50;p.hp=Math.min(p.maxHp,p.hp+50);}},
-        {name:'공격력 강화',     price:100, desc:'ATK +5',         effect:p=>p.bonusAtk+=5},
-        {name:'방어력 강화',     price:80,  desc:'DEF +3',         effect:p=>p.bonusDef+=3},
-        {name:'강화 재추첨',     price:200, desc:'강화 선택 1회',  effect:_=>{setTimeout(()=>triggerSelection('재추첨 강화 선택'),50);}},
-        {name:'힘의 두루마리',   price:300, desc:'ATK+10, DEF+5',  effect:p=>{p.baseAtk+=10;p.baseDef+=5;}},
+    // 기본 3개 풀
+    const allShopItems=[
+        {name:'체력 회복',      price:50,  desc:'+60 HP',        effect:p=>{p.hp=Math.min(p.maxHp,p.hp+60);}},
+        {name:'최대 체력 증가', price:150, desc:'MAX HP +50',    effect:p=>{p.maxHp+=50;p.hp=Math.min(p.maxHp,p.hp+50);}},
+        {name:'공격력 강화',    price:100, desc:'ATK +5',        effect:p=>p.bonusAtk+=5},
+        {name:'방어력 강화',    price:80,  desc:'DEF +3',        effect:p=>p.bonusDef+=3},
+        {name:'강화 재추첨',    price:200, desc:'강화 선택 1회', effect:_=>{setTimeout(()=>triggerSelection('재추첨 강화 선택'),50);}},
+        {name:'힘의 두루마리',  price:300, desc:'ATK+10, DEF+5', effect:p=>{p.baseAtk+=10;p.baseDef+=5;}},
     ];
+    // 기본 3개 랜덤 선택, 특별 능력(퍽 3개 이상) 있으면 4개
+    const p2=gameState.player;
+    const hasSpecial=Object.values(p2.perks).reduce((a,b)=>a+b,0)>=3;
+    const shopItems=[...allShopItems].sort(()=>0.5-Math.random()).slice(0, hasSpecial?4:3);
 
     shopItems.forEach((it,i)=>{
         const can=gameState.player.gold>=it.price;
