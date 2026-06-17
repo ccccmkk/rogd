@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>심연의 ASCII 던전: 100층의 시련</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --text-color: #33ff33;
+            --panel-bg: #111;
+            --border-color: #444;
+            --accent-color: #ffcc00;
+            --shop-color: #00ffff;
+            --boss-color: #ff00ff;
+            --shortcut-color: #00ccff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #game-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+            max-width: 95vw;
+        }
+
+        #main-container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            border: 3px double var(--border-color);
+            background: var(--panel-bg);
+            border-radius: 4px;
+            max-height: 90vh;
+        }
+
+        #screen {
+            font-size: 14px; 
+            line-height: 1.1;
+            letter-spacing: 1px;
+            white-space: pre;
+            background: #000;
+            padding: 15px;
+            border: 1px solid #333;
+            overflow: hidden;
+            min-width: 400px;
+            min-height: 300px;
+        }
+
+        #sidebar {
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+        }
+
+        .stat-box {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            background: #0a0a0a;
+            font-size: 13px;
+        }
+
+        .stat-header {
+            color: #fff;
+            border-bottom: 1px solid #444;
+            margin-bottom: 6px;
+            padding-bottom: 2px;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+
+        .bonus-text {
+            color: var(--accent-color);
+            font-size: 11px;
+        }
+
+        #perk-list {
+            font-size: 11px;
+            color: var(--accent-color);
+            margin-top: 5px;
+            max-height: 80px;
+            overflow-y: auto;
+            line-height: 1.4;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            font-size: 11px;
+            color: #ccc;
+        }
+
+        #log {
+            height: 100px;
+            overflow: hidden;
+            font-size: 11px;
+            color: #ccc;
+            border: 1px solid #333;
+            padding: 8px;
+            background: #000;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+
+        .log-entry {
+            margin-bottom: 2px;
+            border-bottom: solid 1px #111;
+        }
+
+        /* 공통 오버레이 스타일 */
+        .overlay-base {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        /* 저장/불러오기 모달 스타일 */
+        #save-load-overlay {
+            z-index: 150;
+        }
+        .modal-content {
+            background: #111;
+            border: 2px solid var(--accent-color);
+            padding: 25px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(255, 204, 0, 0.2);
+        }
+        #code-area {
+            width: 100%;
+            height: 100px;
+            background: #000;
+            color: #888;
+            border: 1px solid #333;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 12px;
+            resize: none;
+            padding: 10px;
+            outline: none;
+        }
+        #code-area:focus {
+            color: var(--text-color);
+            border-color: var(--text-color);
+        }
+        .modal-btns {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .card-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .card {
+            width: 180px;
+            padding: 15px;
+            border: 2px solid var(--text-color);
+            background: #111;
+            cursor: pointer;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .card:hover { transform: translateY(-5px); border-color: #fff; }
+
+        .death-overlay { background: rgba(60, 0, 0, 0.95); z-index: 200; }
+        .win-overlay { background: rgba(0, 40, 80, 0.95); z-index: 200; }
+        .start-overlay { display: flex; z-index: 210; }
+
+        .choice-btn {
+            display: block;
+            width: 100%;
+            max-width: 320px;
+            margin: 10px auto;
+            padding: 12px 20px;
+            background: #222;
+            color: #fff;
+            border: 1px solid #555;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        .choice-btn:hover { background: #fff; color: #000; }
+        .choice-btn strong { display: block; font-size: 16px; margin-bottom: 4px; }
+
+        .action-btn {
+            padding: 8px 15px;
+            background: #222;
+            color: #fff;
+            border: 1px solid #555;
+            cursor: pointer;
+            font-size: 12px;
+            min-width: 80px;
+        }
+        .action-btn:hover { background: #444; border-color: #fff; }
+
+        #debug-console {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000;
+            border: 1px solid #333;
+            padding: 5px 10px;
+            display: none;
+            z-index: 1000;
+        }
+        #debug-input { background: transparent; border: none; color: var(--text-color); outline: none; width: 250px; font-family: monospace; }
+
+        .boss-hp-container {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            margin-top: 5px;
+            border: 1px solid #000;
+        }
+        .boss-hp-bar {
+            height: 100%;
+            background: var(--boss-color);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        #held-gold-shop {
+            font-size: 18px;
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .guide-box {
+            background: #111; 
+            padding: 25px; 
+            border: 1px solid #333; 
+            text-align: left; 
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-wrapper">
+        <div id="main-container">
+            <div id="screen"></div>
+
+            <div id="sidebar">
+                <div class="stat-box">
+                    <span class="stat-header">● 심볼 가이드</span>
+                    <div class="legend-grid">
+                        <span><b style="color:#fff">@</b> 플레이어</span>
+                        <span><b style="color:#555">#</b> 벽</span>
+                        <span><b style="color:#ff0">$</b> 골드</span>
+                        <span><b style="color:var(--accent-color)">?</b> 보물상자</span>
+                        <span><b style="color:var(--shop-color)">S</b> 상점</span>
+                        <span><b style="color:var(--shortcut-color)">H</b> 비밀통로</span>
+                        <span><b style="color:#0af">&gt;</b> 다음 층</span>
+                        <span><b style="color:var(--boss-color)">B</b> 보스</span>
+                    </div>
+                </div>
+
+                <div class="stat-box">
+                    <span class="stat-header">● 캐릭터 정보</span>
+                    <div class="stat-line"><span>LV / XP:</span> <span id="lv-xp">1 (0/20)</span></div>
+                    <div class="stat-line"><span>HP:</span> <span id="hp">100 / 100</span></div>
+                    <div class="stat-line">
+                        <span>공격력:</span> 
+                        <span><span id="atk-base">10</span> <span id="atk-bonus" class="bonus-text">(+0)</span></span>
+                    </div>
+                    <div class="stat-line">
+                        <span>방어력:</span> 
+                        <span><span id="def-base">0</span> <span id="def-bonus" class="bonus-text">(+0)</span></span>
+                    </div>
+                </div>
+
+                <div class="stat-box">
+                    <span class="stat-header">● 보유 강화 효과</span>
+                    <div id="perk-list">없음</div>
+                </div>
+
+                <div class="stat-box">
+                    <span class="stat-header">● 탐험 진행도</span>
+                    <div class="stat-line"><span>현재 층:</span> <span id="floor">B1 / B100</span></div>
+                    <div class="stat-line"><span>골드:</span> <span id="gold">0</span></div>
+                    <div class="stat-line"><span>세이브 지점:</span> <span id="save-point">B1</span></div>
+                    <div class="stat-line"><span>부활 횟수:</span> <span id="death-count">0</span></div>
+                    <div id="boss-info" style="display:none; margin-top:10px;">
+                        <span style="font-size:12px; color:var(--boss-color);" id="boss-name-label">BOSS HP</span>
+                        <div class="boss-hp-container"><div id="boss-hp-fill" class="boss-hp-bar"></div></div>
+                    </div>
+                </div>
+
+                <div id="log"></div>
+                <div style="font-size: 10px; color: #555; text-align: center;">저장/불러오기는 '.' 키를 누르세요.</div>
+            </div>
+        </div>
+
+        <!-- 선택창/상점 오버레이 -->
+        <div id="selection-overlay" class="overlay-base">
+            <div class="selection-title" id="overlay-title">강화 선택</div>
+            <div id="held-gold-shop" style="display:none;">내 보유 골드: 0 G</div>
+            <div class="card-container" id="card-container"></div>
+            <button id="close-overlay" class="action-btn" style="display:none; margin-top:20px;">닫기</button>
+        </div>
+
+        <!-- 저장/불러오기 모달 -->
+        <div id="save-load-overlay" class="overlay-base">
+            <div class="modal-content">
+                <h2 style="color:var(--accent-color); margin: 0 0 15px 0;">과거의 기억 전송</h2>
+                <div style="font-size: 11px; color: #aaa; margin-bottom: 10px;">코드를 생성하여 복사하거나, 코드를 입력 후 불러오기 하세요.</div>
+                <textarea id="code-area" placeholder="여기에 코드를 붙여넣으세요..."></textarea>
+                <div class="modal-btns">
+                    <button class="action-btn" onclick="ui.generateAndDisplay()">코드 생성</button>
+                    <button class="action-btn" onclick="ui.copyToClipboard()">코드 복사</button>
+                    <button class="action-btn" onclick="ui.performLoad()">불러오기</button>
+                    <button class="action-btn" onclick="ui.closeSaveModal()" style="border-color:#888;">닫기 (Esc)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 시작 화면 -->
+        <div id="start-overlay" class="overlay-base start-overlay">
+            <h1 style="color:var(--text-color); font-size:32px; margin-bottom: 20px; text-shadow: 0 0 10px var(--text-color); text-align: center;">심연의 던전에 오신 것을 환영합니다</h1>
+            <div class="guide-box">
+                <p style="color: #fff; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 5px;">[ 조작 가이드 ]</p>
+                <div style="line-height: 1.8;">
+                    <span style="color:var(--accent-color)">■ 이동:</span> 방향키 (Arrow Keys)<br>
+                    <span style="color:var(--accent-color)">■ 대기:</span> Space 바<br>
+                    <span style="color:var(--accent-color)">■ 메뉴/다시시작:</span> R 키<br>
+                    <span style="color:var(--accent-color)">■ 저장/불러오기:</span> . (마침표) 키<br>
+                    <span style="color:var(--accent-color)">■ 디버그 콘솔:</span> ` (백틱) 키
+                </div>
+            </div>
+            <p style="margin-top: 10px; color: #fff; animation: blink 1.5s infinite; font-size: 18px;">- 아무 키나 눌러서 시작 -</p>
+        </div>
+
+        <!-- 사망 화면 -->
+        <div id="death-screen" class="overlay-base death-overlay">
+            <h1 style="color:#f00; font-size:40px; margin-bottom: 10px;">심연에 삼켜졌습니다</h1>
+            <p style="color:#ccc; margin-bottom: 20px;">어떻게 여정을 계속하시겠습니까?</p>
+            <div style="width: 100%;">
+                <button class="choice-btn" id="btn-checkpoint" onclick="gameState.restart('checkpoint')">
+                    <strong>세이브포인트에서 시작</strong>
+                    <small id="checkpoint-desc">마지막 보스 처치 지점 (B1)에서 재개</small>
+                </button>
+                <button class="choice-btn" onclick="gameState.restart('memory')">
+                    <strong>1층부터 시작 (기억 유지)</strong>
+                    <small>스탯과 강화를 유지하고 1층부터 다시 도전</small>
+                </button>
+                <button class="choice-btn" onclick="gameState.restart('oblivion')" style="border-color: #f44;">
+                    <strong>완전한 망각 (초기화)</strong>
+                    <small>모든 능력치와 진행도를 잃고 처음부터</small>
+                </button>
+            </div>
+        </div>
+
+        <!-- 승리 화면 -->
+        <div id="win-screen" class="overlay-base win-overlay">
+            <h1 style="color:#0ff; font-size:40px; margin-bottom: 5px;">VICTORY</h1>
+            <p>축하합니다! 던전을 정복하셨습니다.</p>
+            <div id="win-summary" style="text-align: left; margin: 20px 0; color: #eee; font-size: 14px; line-height: 1.6; max-width: 400px; width: 100%;"></div>
+            <button class="choice-btn" onclick="gameState.restart('oblivion')"><strong>새로운 운명 시작</strong></button>
+        </div>
+    </div>
+
+    <style>
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+    </style>
+
+    <div id="debug-console">CMD: <input type="text" id="debug-input"></div>
+
+    <script>
+        // --- 상수 및 설정 ---
+        const MAX_WIDTH = 65;
+        const MAX_HEIGHT = 30;
+        const TILES = { 
+            WALL: '#', FLOOR: '.', PLAYER: '@', STAIRS: '>', 
+            GOLD: '$', CHEST: '?', POTION: '!', SHOP: 'S', 
+            SHORTCUT: 'H', VOID: ' ' 
+        };
+
+        const ALL_PERKS = [
+            { id: 'atk_up', name: '예리한 칼날', desc: 'ATK +5', effect: (p) => p.bonusAtk += 5 },
+            { id: 'hp_up', name: '강인한 심장', desc: 'MAX HP +40', effect: (p) => { p.maxHp += 40; p.hp = Math.min(p.maxHp, p.hp + 40); } },
+            { id: 'def_up', name: '철벽의 가드', desc: 'DEF +2', effect: (p) => p.bonusDef += 2 },
+            { id: 'crit', name: '필살의 일격', desc: '크리티컬 확률 +10%', effect: (p) => p.skills.crit = (p.skills.crit || 0) + 0.1 },
+            { id: 'lifesteal', name: '생명 약탈', desc: '공격 시 5회복 (20%)', effect: (p) => p.skills.lifesteal = (p.skills.lifesteal || 0) + 0.2 },
+            { id: 'view', name: '밝은 눈', desc: '시야 +2', effect: (p) => p.viewDistance += 2 }
+        ];
+
+        // --- 게임 상태 ---
+        let gameState = {
+            startTime: Date.now(),
+            deathCount: 0,
+            savePointFloor: 1,
+            isBossClearedAtSavePoint: false,
+            currentWidth: 30,
+            currentHeight: 15,
+            gameStarted: false,
+            
+            restart: function(mode) {
+                this.isGameOver = false;
+                this.isPaused = false;
+                
+                if (mode === 'oblivion') {
+                    this.startTime = Date.now();
+                    this.deathCount = 0;
+                    this.savePointFloor = 1;
+                    this.floorNum = 1;
+                    this.isBossClearedAtSavePoint = false;
+                    this.player = this.createDefaultPlayer();
+                    addLog("심연이 모든 기억을 삼켰습니다. 처음부터 시작합니다.");
+                } else if (mode === 'memory') {
+                    this.deathCount++;
+                    this.floorNum = 1;
+                    this.isBossClearedAtSavePoint = false;
+                    this.player.hp = this.player.maxHp;
+                    addLog("스탯을 유지한 채 1층에서 다시 시작합니다.");
+                } else if (mode === 'checkpoint') {
+                    this.deathCount++;
+                    this.floorNum = this.savePointFloor;
+                    this.isBossClearedAtSavePoint = (this.floorNum % 20 === 0);
+                    this.player.hp = this.player.maxHp;
+                    addLog(`B${this.savePointFloor}에서 여정을 재개합니다.`);
+                }
+                
+                document.getElementById('death-screen').style.display = 'none';
+                document.getElementById('win-screen').style.display = 'none';
+                generateFloor();
+                updateUI();
+                render();
+            },
+
+            createDefaultPlayer: function() {
+                return { 
+                    x: 0, y: 0, hp: 150, maxHp: 150, baseAtk: 12, baseDef: 2, bonusAtk: 0, bonusDef: 0,
+                    xp: 0, nextXp: 20, lv: 1, gold: 0, 
+                    viewDistance: 8, skills: {}, perks: {} 
+                };
+            }
+        };
+
+        // --- 암호화 및 세이브 로직 ---
+        const cipherMap = { '0':'a', '1':'k', '2':'z', '3':'x', '4':'m', '5':'e', '6':'o', '7':'q', '8':'u', '9':'y', '.':'p', ',':'d' };
+        const decipherMap = Object.fromEntries(Object.entries(cipherMap).map(([k,v]) => [v,k]));
+
+        function encrypt(str) {
+            return str.split('').map(c => cipherMap[c] || c).join('');
+        }
+        function decrypt(str) {
+            return str.split('').map(c => decipherMap[c] || c).join('');
+        }
+
+        function getSaveCode() {
+            const p = gameState.player;
+            // 층,렙,골드,기본공,기본방,추가공,추가방,경험치,세이브포인트,현재체력
+            const coreData = [
+                gameState.floorNum, p.lv, p.gold, p.baseAtk, p.baseDef, p.bonusAtk, p.bonusDef, Math.floor(p.xp), gameState.savePointFloor, Math.floor(p.hp)
+            ].join(',');
+            
+            const perkEntries = Object.entries(p.perks).map(([name, count]) => {
+                const perkId = ALL_PERKS.findIndex(ap => ap.name === name);
+                return `${perkId}:${count}`;
+            }).join(',');
+
+            const combined = coreData + "|" + perkEntries;
+            const encrypted = encrypt(combined);
+            return encrypted.match(/.{1,5}/g).join('-').toUpperCase();
+        }
+
+        // --- UI 매니저 ---
+        const ui = {
+            openSaveModal: function() {
+                gameState.isPaused = true;
+                const overlay = document.getElementById('save-load-overlay');
+                overlay.style.display = 'flex';
+                const area = document.getElementById('code-area');
+                area.value = "";
+                area.focus();
+            },
+            closeSaveModal: function() {
+                gameState.isPaused = false;
+                document.getElementById('save-load-overlay').style.display = 'none';
+            },
+            generateAndDisplay: function() {
+                const code = getSaveCode();
+                document.getElementById('code-area').value = code;
+                addLog("코드가 생성되었습니다.");
+            },
+            copyToClipboard: function() {
+                const area = document.getElementById('code-area');
+                if (!area.value) this.generateAndDisplay();
+                area.select();
+                document.execCommand('copy');
+                addLog("코드가 클립보드에 복사되었습니다.");
+            },
+            performLoad: function() {
+                const code = document.getElementById('code-area').value.trim();
+                if (!code) return;
+
+                try {
+                    const sanitized = code.toLowerCase().replace(/-/g, '');
+                    const decrypted = decrypt(sanitized);
+                    const [coreStr, perkStr] = decrypted.split('|');
+                    const core = coreStr.split(',').map(Number);
+                    
+                    const p = gameState.player;
+                    gameState.floorNum = core[0];
+                    p.lv = core[1];
+                    p.gold = core[2];
+                    p.baseAtk = core[3];
+                    p.baseDef = core[4];
+                    p.bonusAtk = core[5];
+                    p.bonusDef = core[6];
+                    p.xp = core[7];
+                    gameState.savePointFloor = core[8] || core[0];
+                    p.hp = core[9] || p.maxHp;
+                    
+                    p.nextXp = 20 + (p.lv * 10);
+                    p.perks = {};
+                    p.skills = {};
+
+                    if (perkStr) {
+                        perkStr.split(',').forEach(entry => {
+                            if (!entry) return;
+                            const [id, count] = entry.split(':').map(Number);
+                            const perk = ALL_PERKS[id];
+                            if (perk) {
+                                p.perks[perk.name] = count;
+                                for (let i = 0; i < count; i++) perk.effect(p);
+                            }
+                        });
+                    }
+                    
+                    gameState.isGameOver = false;
+                    this.closeSaveModal();
+                    generateFloor();
+                    updateUI();
+                    render();
+                    addLog("코드를 통해 과거의 기억을 불러왔습니다.");
+                } catch (e) {
+                    addLog("잘못된 코드입니다.");
+                }
+            }
+        };
+
+        // --- 게임 시스템 ---
+        function resetGame() {
+            gameState.startTime = Date.now();
+            gameState.deathCount = 0;
+            gameState.savePointFloor = 1;
+            gameState.isBossClearedAtSavePoint = false;
+            gameState.floorNum = 1;
+            gameState.turn = 0;
+            gameState.isGameOver = false;
+            gameState.isPaused = false;
+            gameState.debugMap = false;
+            gameState.bossActive = false;
+            gameState.gameStarted = false;
+            gameState.player = gameState.createDefaultPlayer();
+            gameState.map = [];
+            gameState.monsters = [];
+            gameState.items = [];
+            gameState.shops = [];
+            gameState.stairs = { x: 0, y: 0 };
+            gameState.boss = null;
+
+            document.getElementById('death-screen').style.display = 'none';
+            document.getElementById('win-screen').style.display = 'none';
+            document.getElementById('start-overlay').style.display = 'flex';
+            generateFloor();
+            updateUI();
+            render();
+        }
+
+        function generateFloor() {
+            gameState.currentWidth = Math.min(MAX_WIDTH, 30 + Math.floor(gameState.floorNum / 3));
+            gameState.currentHeight = Math.min(MAX_HEIGHT, 15 + Math.floor(gameState.floorNum / 6));
+
+            gameState.map = Array.from({ length: gameState.currentHeight }, () => Array(gameState.currentWidth).fill(TILES.WALL));
+            gameState.monsters = []; gameState.items = []; gameState.shops = [];
+            gameState.bossActive = false; gameState.boss = null; gameState.shortcut = null;
+
+            if (gameState.floorNum % 20 === 0) {
+                generateBossFloor();
+            } else {
+                generateNormalFloor();
+            }
+            gameState.isBossClearedAtSavePoint = false;
+        }
+
+        function generateNormalFloor() {
+            const rooms = [];
+            const roomTries = Math.min(15, 6 + Math.floor(gameState.floorNum / 10));
+            for (let i = 0; i < roomTries; i++) {
+                const w = 5 + Math.floor(Math.random() * 6), h = 4 + Math.floor(Math.random() * 4);
+                const x = 1 + Math.floor(Math.random() * (gameState.currentWidth - w - 2)), y = 1 + Math.floor(Math.random() * (gameState.currentHeight - h - 2));
+                if (!rooms.some(r => !(x + w < r.x || x > r.x + r.w || y + h < r.y || y > r.y + r.h))) {
+                    for (let ry = y; ry < y + h; ry++) for (let rx = x; rx < x + w; rx++) gameState.map[ry][rx] = TILES.FLOOR;
+                    rooms.push({ x, y, w, h, cx: Math.floor(x + w / 2), cy: Math.floor(y + h / 2) });
+                }
+            }
+            for (let i = 0; i < rooms.length - 1; i++) {
+                let p1 = rooms[i], p2 = rooms[i+1];
+                for (let cx = Math.min(p1.cx, p2.cx); cx <= Math.max(p1.cx, p2.cx); cx++) gameState.map[p1.cy][cx] = TILES.FLOOR;
+                for (let cy = Math.min(p1.cy, p2.cy); cy <= Math.max(p1.cy, p2.cy); cy++) gameState.map[cy][p2.cx] = TILES.FLOOR;
+            }
+            gameState.player.x = rooms[0].cx; gameState.player.y = rooms[0].cy;
+            gameState.stairs = { x: rooms[rooms.length-1].cx, y: rooms[rooms.length-1].cy };
+            
+            if (Math.random() < 0.2 && rooms.length > 2) {
+                const r = rooms[Math.floor(Math.random() * (rooms.length - 2)) + 1];
+                gameState.shortcut = { x: r.x + 1, y: r.y + 1 };
+            }
+
+            rooms.forEach((r, idx) => {
+                if (idx === 0) return;
+                const monsterChance = 0.3 + (gameState.floorNum / 200);
+                if (Math.random() < monsterChance) {
+                   spawnMonster(r.x + 1 + Math.floor(Math.random()*(r.w-2)), r.y + 1 + Math.floor(Math.random()*(r.h-2)));
+                }
+                if (Math.random() < 0.3) gameState.items.push({ x: r.x + 2, y: r.y + 2, type: Math.random() < 0.7 ? TILES.GOLD : TILES.CHEST });
+            });
+            
+            // 상점 배치 로직 개선: 좁은 통로가 아닌 방 내부 바닥 타일에 배치
+            if (Math.random() < 0.3 && rooms.length > 1) {
+                const r = rooms[1];
+                let rx = r.x + 1 + Math.floor(Math.random() * (r.w - 2));
+                let ry = r.y + 1 + Math.floor(Math.random() * (r.h - 2));
+                // 통로의 중심(cx, cy)은 피해서 배치
+                if (rx === r.cx && ry === r.cy) rx++;
+                gameState.shops.push({ x: rx, y: ry });
+            }
+        }
+
+        function generateBossFloor() {
+            const margin = 4;
+            for (let y = margin; y < gameState.currentHeight - margin; y++) {
+                for (let x = margin; x < gameState.currentWidth - margin; x++) {
+                    gameState.map[y][x] = TILES.FLOOR;
+                }
+            }
+            gameState.player.x = margin + 2; gameState.player.y = Math.floor(gameState.currentHeight/2);
+            gameState.stairs = { x: gameState.currentWidth - margin - 3, y: Math.floor(gameState.currentHeight/2) };
+
+            if (!gameState.isBossClearedAtSavePoint) {
+                const f = gameState.floorNum;
+                let bObj = { 
+                    x: Math.floor(gameState.currentWidth/2), y: Math.floor(gameState.currentHeight/2), size: 2, 
+                    hp: f * 50, maxHp: f * 50, def: f * 0.4, name: "", char: "B" 
+                };
+
+                if (f === 20) { bObj.name = "킹 슬라임"; bObj.size = 2; bObj.char = "S"; bObj.ability = "split"; }
+                else if (f === 40) { bObj.name = "골렘 주먹"; bObj.size = 3; bObj.char = "G"; bObj.hp *= 1.3; bObj.def *= 1.3; }
+                else if (f === 60) { bObj.name = "공허의 눈"; bObj.size = 2; bObj.char = "E"; bObj.ability = "teleport"; }
+                else if (f === 80) { bObj.name = "지옥 파수꾼"; bObj.size = 3; bObj.char = "H"; bObj.ability = "summon"; }
+                else if (f === 100) { bObj.name = "심연의 주권자"; bObj.size = 4; bObj.char = "X"; bObj.hp *= 2.5; bObj.def *= 1.8; }
+
+                gameState.boss = bObj;
+                gameState.bossActive = true;
+                addLog(`보스 [${bObj.name}]가 나타났습니다!`);
+            } else {
+                gameState.bossActive = false;
+                gameState.shops.push({x: Math.floor(gameState.currentWidth/2), y: Math.floor(gameState.currentHeight/2)});
+            }
+        }
+
+        function spawnMonster(x, y) {
+            const f = gameState.floorNum;
+            const types = [
+                { char: 'g', name: '고블린', hp: 15, atk: 4, def: 0, xp: 12 },
+                { char: 'o', name: '오크', hp: 35, atk: 10, def: 3, xp: 30 },
+                { char: 's', name: '스켈레톤', hp: 20, atk: 7, def: 1, xp: 18 }
+            ];
+            const t = types[Math.floor(Math.random() * types.length)];
+            gameState.monsters.push({ 
+                ...t, x, y, 
+                hp: Math.floor(t.hp + (f * 2.5)), 
+                atk: Math.floor(t.atk + (f * 0.7)),
+                def: Math.floor(t.def + (f * 0.25))
+            });
+        }
+
+        // --- 행동 처리 ---
+        function handleMove(dx, dy) {
+            if (gameState.isGameOver || gameState.isPaused) return;
+            const nx = gameState.player.x + dx, ny = gameState.player.y + dy;
+            if (nx < 0 || nx >= gameState.currentWidth || ny < 0 || ny >= gameState.currentHeight || gameState.map[ny][nx] === TILES.WALL) return;
+
+            if (gameState.bossActive) {
+                const b = gameState.boss;
+                if (nx >= b.x && nx < b.x + b.size && ny >= b.y && ny < b.y + b.size) {
+                    attackBoss(); tick(); return;
+                }
+            }
+
+            const mIdx = gameState.monsters.findIndex(m => m.x === nx && m.y === ny);
+            if (mIdx !== -1) { combat(mIdx); tick(); return; }
+
+            // 상점 타일 충돌 개선: 상점을 밟고 지나갈 수 있도록 허용 (return 제거)
+            const sIdx = gameState.shops.findIndex(s => s.x === nx && s.y === ny);
+            if (sIdx !== -1) { triggerShop(); }
+
+            gameState.player.x = nx; gameState.player.y = ny;
+            
+            if (gameState.shortcut && nx === gameState.shortcut.x && ny === gameState.shortcut.y) {
+                takeShortcut();
+                return;
+            }
+
+            const iIdx = gameState.items.findIndex(i => i.x === nx && i.y === ny);
+            if (iIdx !== -1) pickUpItem(iIdx);
+
+            if (!gameState.bossActive && nx === gameState.stairs.x && ny === gameState.stairs.y) {
+                if (gameState.floorNum === 100) { winGame(); return; }
+                gameState.floorNum++; 
+                generateFloor(); 
+                addLog(`B${gameState.floorNum}층으로 이동했습니다.`);
+            }
+            tick();
+        }
+
+        function takeShortcut() {
+            const nextBoss = Math.ceil((gameState.floorNum + 1) / 20) * 20;
+            const skipAmount = 5;
+            const prevFloor = gameState.floorNum;
+            gameState.floorNum = Math.min(nextBoss, gameState.floorNum + skipAmount);
+            addLog(`비밀 통로로 ${gameState.floorNum - prevFloor}개 층을 건너뛰었습니다!`);
+            generateFloor();
+            updateUI();
+            render();
+        }
+
+        function attackBoss() {
+            const b = gameState.boss;
+            const p = gameState.player;
+            const totalAtk = p.baseAtk + p.bonusAtk;
+            let rawDmg = totalAtk + Math.floor(Math.random() * 6);
+            let dmg = Math.max(1, rawDmg - Math.floor(b.def)); 
+            
+            if (p.skills.crit && Math.random() < p.skills.crit) { 
+                dmg = Math.floor(dmg * 1.5); 
+                addLog(`CRITICAL! 보스에게 ${dmg} 피해!`); 
+            } else if (dmg <= 1 && rawDmg <= Math.floor(b.def)) {
+                addLog(`공격이 보스의 단단한 피부에 막혔습니다.`);
+            } else { 
+                addLog(`보스를 타격했습니다! (${dmg} 피해)`); 
+            }
+            
+            b.hp -= dmg;
+            if (p.skills.lifesteal && Math.random() < p.skills.lifesteal && dmg > 0) p.hp = Math.min(p.maxHp, p.hp + 5);
+            
+            if (b.hp <= 0) {
+                addLog(`보스 [${b.name}] 처치! 맵 전역에 보상이 나타납니다.`);
+                gameState.bossActive = false;
+                gameState.savePointFloor = gameState.floorNum; 
+                
+                const margin = 3;
+                for (let i = 0; i < 15; i++) {
+                    const rx = margin + Math.floor(Math.random() * (gameState.currentWidth - margin * 2));
+                    const ry = margin + Math.floor(Math.random() * (gameState.currentHeight - margin * 2));
+                    if (gameState.map[ry][rx] === TILES.FLOOR) {
+                        const type = Math.random() < 0.8 ? TILES.GOLD : TILES.CHEST;
+                        gameState.items.push({x: rx, y: ry, type: type});
+                    }
+                }
+                gameState.shops.push({x: b.x, y: b.y});
+                p.xp += (gameState.floorNum * 60);
+                p.gold += (gameState.floorNum * 120);
+                checkLevelUp();
+            }
+        }
+
+        function combat(idx) {
+            const m = gameState.monsters[idx];
+            const p = gameState.player;
+            const totalAtk = p.baseAtk + p.bonusAtk;
+            let dmg = Math.max(1, (totalAtk + Math.floor(Math.random() * 4)) - Math.floor(m.def));
+            m.hp -= dmg;
+            addLog(`${m.name} 공격 (${dmg} 피해)`);
+            if (m.hp <= 0) {
+                addLog(`${m.name} 처치! (+${m.xp} XP)`);
+                p.xp += m.xp; gameState.monsters.splice(idx, 1);
+                checkLevelUp();
+            }
+        }
+
+        function checkLevelUp() {
+            const p = gameState.player;
+            if (p.xp >= p.nextXp) {
+                p.lv++;
+                p.xp -= p.nextXp;
+                p.nextXp = 20 + (p.lv * 10);
+                p.baseAtk += 2;
+                p.baseDef += 1;
+                triggerSelection(`LEVEL UP (Lv.${p.lv})`);
+                return true;
+            }
+            return false;
+        }
+
+        function tick() {
+            if (gameState.bossActive) {
+                const b = gameState.boss;
+                const dist = Math.max(Math.abs(b.x - gameState.player.x), Math.abs(b.y - gameState.player.y));
+                if (dist <= b.size) {
+                    const totalDef = gameState.player.baseDef + gameState.player.bonusDef;
+                    let dmg = Math.max(1, (gameState.floorNum * 2.2) - totalDef);
+                    gameState.player.hp -= Math.floor(dmg); 
+                    addLog(`보스의 공격! (${Math.floor(dmg)} 피해)`);
+                } else if (b.ability === "teleport" && Math.random() < 0.1) {
+                    b.x = 10 + Math.floor(Math.random() * (gameState.currentWidth - 20)); 
+                    b.y = 5 + Math.floor(Math.random() * (gameState.currentHeight - 10));
+                    addLog(`보스가 순간이동했습니다!`);
+                } else if (b.ability === "summon" && Math.random() < 0.08) {
+                    gameState.monsters.push({ char: 'h', name: '하수인', hp: 30, atk: 12, def: 5, x: b.x - 1, y: b.y - 1, xp: 10 });
+                    addLog(`보스가 하수인을 소환했습니다!`);
+                }
+            }
+            gameState.monsters.forEach(m => {
+                const dx = Math.abs(m.x - gameState.player.x), dy = Math.abs(m.y - gameState.player.y);
+                if (dx + dy === 1) {
+                    const totalDef = gameState.player.baseDef + gameState.player.bonusDef;
+                    let dmg = Math.max(1, m.atk - totalDef);
+                    gameState.player.hp -= Math.floor(dmg); 
+                    addLog(`${m.name}의 공격 (${Math.floor(dmg)} 피해)`);
+                } else if (dx + dy < 8) {
+                    let mx = Math.sign(gameState.player.x - m.x), my = Math.sign(gameState.player.y - m.y);
+                    if (gameState.map[m.y+my][m.x+mx] === TILES.FLOOR && 
+                        !(m.x+mx === gameState.player.x && m.y+my === gameState.player.y) &&
+                        !gameState.monsters.some(o => o.x === m.x+mx && o.y === m.y+dy)) {
+                        m.x += mx; m.y += my;
+                    }
+                }
+            });
+            if (gameState.player.hp <= 0) {
+                gameState.player.hp = 0;
+                gameState.isGameOver = true;
+                const cpDesc = document.getElementById('checkpoint-desc');
+                if (cpDesc) cpDesc.innerText = `마지막 보스 처치 지점 (B${gameState.savePointFloor})에서 재개`;
+                document.getElementById('death-screen').style.display = 'flex';
+            }
+            updateUI(); render();
+        }
+
+        // --- UI 업데이트 및 렌더링 ---
+        function updateUI() {
+            const p = gameState.player;
+            const els = {
+                'lv-xp': `${p.lv} (${Math.floor(p.xp)}/${p.nextXp})`,
+                'hp': `${Math.floor(p.hp)} / ${p.maxHp}`, 
+                'atk-base': p.baseAtk,
+                'atk-bonus': `(+${p.bonusAtk})`,
+                'def-base': p.baseDef,
+                'def-bonus': `(+${p.bonusDef})`,
+                'gold': p.gold,
+                'floor': `B${gameState.floorNum} / 100`,
+                'save-point': `B${gameState.savePointFloor}`,
+                'death-count': gameState.deathCount
+            };
+            for (const [id, val] of Object.entries(els)) {
+                const el = document.getElementById(id);
+                if (el) el.innerText = val;
+            }
+            const pList = document.getElementById('perk-list');
+            if (pList) {
+                const pKeys = Object.keys(p.perks);
+                pList.innerHTML = pKeys.length ? pKeys.map(k => `${k} x ${p.perks[k]}`).join('<br>') : "없음";
+            }
+            const bInfo = document.getElementById('boss-info');
+            if (bInfo && gameState.bossActive) {
+                bInfo.style.display = 'block';
+                document.getElementById('boss-name-label').innerText = `${gameState.boss.name} (DEF: ${Math.floor(gameState.boss.def)})`;
+                document.getElementById('boss-hp-fill').style.width = `${Math.max(0, (gameState.boss.hp / gameState.boss.maxHp) * 100)}%`;
+            } else if (bInfo) bInfo.style.display = 'none';
+        }
+
+        function render() {
+            const screen = document.getElementById('screen');
+            const p = gameState.player;
+            let out = "";
+            for (let y = 0; y < gameState.currentHeight; y++) {
+                for (let x = 0; x < gameState.currentWidth; x++) {
+                    const dist = Math.sqrt((x-p.x)**2 + (y-p.y)**2);
+                    if (!gameState.debugMap && dist > p.viewDistance) { out += `<span style="color:#111">${TILES.VOID}</span>`; continue; }
+                    let char = gameState.map[y][x], color = "#444";
+                    const monster = gameState.monsters.find(m => m.x === x && m.y === y);
+                    const item = gameState.items.find(i => i.x === x && i.y === y);
+                    const shop = gameState.shops.find(s => s.x === x && s.y === y);
+                    let isBoss = false;
+                    if (gameState.bossActive) {
+                        const b = gameState.boss;
+                        if (x >= b.x && x < b.x+b.size && y >= b.y && y < b.y+b.size) { char = b.char; color = "var(--boss-color)"; isBoss = true; }
+                    }
+                    if (x === p.x && y === p.y) { char = TILES.PLAYER; color = "#fff"; }
+                    else if (isBoss) {}
+                    else if (monster) { char = monster.char; color = "#f44"; }
+                    else if (shop) { char = TILES.SHOP; color = "var(--shop-color)"; }
+                    else if (gameState.shortcut && x === gameState.shortcut.x && y === gameState.shortcut.y) { char = TILES.SHORTCUT; color = "var(--shortcut-color)"; }
+                    else if (!gameState.bossActive && x === gameState.stairs.x && y === gameState.stairs.y) { char = TILES.STAIRS; color = "#0af"; }
+                    else if (item) { char = item.type; color = item.type === TILES.GOLD ? "#ff0" : "var(--accent-color)"; }
+                    else if (char === TILES.FLOOR) color = "#222";
+                    out += `<span style="color:${color}">${char}</span>`;
+                }
+                out += "\n";
+            }
+            screen.innerHTML = out;
+        }
+
+        function triggerSelection(title) {
+            gameState.isPaused = true;
+            const overlay = document.getElementById('selection-overlay');
+            const container = document.getElementById('card-container');
+            const goldDisp = document.getElementById('held-gold-shop');
+            const titleEl = document.getElementById('overlay-title');
+            
+            titleEl.innerText = title;
+            goldDisp.style.display = "none";
+            container.innerHTML = ""; 
+            overlay.style.display = "flex";
+            
+            const picked = [...ALL_PERKS].sort(() => 0.5 - Math.random()).slice(0, 3);
+            picked.forEach(perk => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `<strong>${perk.name}</strong><br><small>${perk.desc}</small>`;
+                card.onclick = () => {
+                    perk.effect(gameState.player);
+                    gameState.player.perks[perk.name] = (gameState.player.perks[perk.name] || 0) + 1;
+                    gameState.isPaused = false;
+                    overlay.style.display = "none"; 
+                    updateUI(); render();
+                    checkLevelUp();
+                };
+                container.appendChild(card);
+            });
+        }
+
+        function triggerShop() {
+            gameState.isPaused = true;
+            const overlay = document.getElementById('selection-overlay');
+            const container = document.getElementById('card-container');
+            const close = document.getElementById('close-overlay');
+            const goldDisp = document.getElementById('held-gold-shop');
+            const titleEl = document.getElementById('overlay-title');
+            
+            titleEl.innerText = "심연의 상점";
+            goldDisp.innerText = `내 보유 골드: ${gameState.player.gold} G`;
+            goldDisp.style.display = "block";
+            
+            container.innerHTML = ""; 
+            overlay.style.display = "flex";
+            close.style.display = "block";
+            
+            const items = [
+                { name: "체력 회복", price: 50, effect: (p) => p.hp = Math.min(p.maxHp, p.hp + 50) },
+                { name: "공격력 강화", price: 100, effect: (p) => p.bonusAtk += 3 },
+                { name: "방어력 강화", price: 100, effect: (p) => p.bonusDef += 1 }
+            ];
+            items.forEach(it => {
+                const isAffordable = gameState.player.gold >= it.price;
+                const card = document.createElement('div');
+                card.className = `card ${!isAffordable ? 'disabled' : ''}`;
+                if (!isAffordable) card.style.opacity = "0.5";
+                
+                card.innerHTML = `<strong>${it.name}</strong><br><small>${it.price} G</small>`;
+                card.onclick = () => {
+                    if (gameState.player.gold >= it.price) {
+                        gameState.player.gold -= it.price; it.effect(gameState.player);
+                        updateUI(); triggerShop();
+                    }
+                };
+                container.appendChild(card);
+            });
+            close.onclick = () => { 
+                gameState.isPaused = false; 
+                overlay.style.display = "none"; 
+                close.style.display = "none"; 
+            };
+        }
+
+        function winGame() {
+            gameState.isGameOver = true;
+            const screen = document.getElementById('win-screen');
+            const summary = document.getElementById('win-summary');
+            const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
+            const p = gameState.player;
+            summary.innerHTML = `
+                ● 정복 소요 시간: ${Math.floor(elapsed/60)}분 ${elapsed%60}초<br>
+                ● 심연의 기억(재시작) 횟수: ${gameState.deathCount}회<br>
+                ● 최종 레벨: Lv.${p.lv}<br>
+                ● 최종 공격력: ${p.baseAtk + p.bonusAtk}<br>
+                ● 최종 방어력: ${p.baseDef + p.bonusDef}<br>
+                ● 수집 골드: ${p.gold} G
+            `;
+            screen.style.display = 'flex';
+        }
+
+        function addLog(m) {
+            const l = document.getElementById('log');
+            if (l) { 
+                const e = document.createElement('div'); 
+                e.className = 'log-entry'; 
+                e.innerText = `> ${m}`; 
+                l.prepend(e); 
+            }
+        }
+
+        function pickUpItem(idx) {
+            const item = gameState.items[idx];
+            if (item.type === TILES.GOLD) { gameState.player.gold += 35; addLog("골드를 획득했습니다."); }
+            else if (item.type === TILES.CHEST) { triggerSelection("보물 상자를 발견했습니다!"); }
+            gameState.items.splice(idx, 1);
+        }
+
+        // --- 키보드 핸들러 ---
+        window.addEventListener('keydown', (e) => {
+            if (!gameState.gameStarted) {
+                gameState.gameStarted = true;
+                document.getElementById('start-overlay').style.display = 'none';
+                addLog("던전에 입장했습니다. 행운을 빕니다.");
+                return;
+            }
+
+            if (e.key === 'Escape') {
+                if (document.getElementById('save-load-overlay').style.display === 'flex') {
+                    ui.closeSaveModal();
+                } else if (document.getElementById('selection-overlay').style.display === 'flex' && document.getElementById('close-overlay').style.display !== 'none') {
+                    document.getElementById('close-overlay').click();
+                }
+                return;
+            }
+
+            if (e.key === '.' && !gameState.isGameOver) {
+                if (document.getElementById('save-load-overlay').style.display === 'flex') {
+                    ui.closeSaveModal();
+                } else {
+                    ui.openSaveModal();
+                }
+                return;
+            }
+
+            if (gameState.isPaused && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+                if (e.key === 'Enter' && e.target.id === 'debug-input') {
+                    const di = document.getElementById('debug-input');
+                    const v = di.value.toLowerCase().trim();
+                    if (v === 'map') gameState.debugMap = !gameState.debugMap;
+                    if (v === 'gold') gameState.player.gold += 10000;
+                    if (v === 'pow') {
+                        gameState.player.baseAtk += 1000;
+                        gameState.player.baseDef += 1000;
+                        addLog("[DEBUG] 파워 폭발!");
+                    }
+                    if (v.startsWith('exp ')) {
+                        const amt = parseInt(v.split(' ')[1]);
+                        if (!isNaN(amt)) { gameState.player.xp += amt; checkLevelUp(); }
+                    }
+                    if (v === 'skip') { gameState.floorNum = Math.min(100, gameState.floorNum + 19); generateFloor(); }
+                    di.value = "";
+                    document.getElementById('debug-console').style.display = 'none';
+                    gameState.isPaused = false;
+                    render(); updateUI();
+                }
+                return; 
+            }
+
+            if (e.key === 'r' || e.key === 'R') { 
+                if (!gameState.isGameOver) {
+                    gameState.isGameOver = true;
+                    const cpDesc = document.getElementById('checkpoint-desc');
+                    if (cpDesc) cpDesc.innerText = `마지막 보스 처치 지점 (B${gameState.savePointFloor})에서 재개`;
+                    document.getElementById('death-screen').style.display = 'flex';
+                }
+                return; 
+            }
+
+            if (e.key === '`') {
+                const c = document.getElementById('debug-console');
+                if (c) { 
+                    c.style.display = c.style.display === 'none' ? 'block' : 'none'; 
+                    if (c.style.display === 'block') {
+                        gameState.isPaused = true;
+                        document.getElementById('debug-input').focus(); 
+                    } else {
+                        gameState.isPaused = false;
+                    }
+                }
+                return;
+            }
+
+            if (gameState.isPaused || gameState.isGameOver) return;
+            switch(e.key) {
+                case 'ArrowUp': handleMove(0, -1); break;
+                case 'ArrowDown': handleMove(0, 1); break;
+                case 'ArrowLeft': handleMove(-1, 0); break;
+                case 'ArrowRight': handleMove(1, 0); break;
+                case ' ': tick(); break;
+            }
+        });
+
+        window.onload = resetGame;
+    </script>
+</body>
+</html>
