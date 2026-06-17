@@ -713,6 +713,38 @@ function bossPower(floor) {
     return floor * 55;
 }
 
+// ─── 리셋 확인 ───
+function showResetConfirm() {
+    gameState.isPaused = true;
+    const ov = document.getElementById('selection-overlay');
+    const title = document.getElementById('selection-title');
+    const choices = document.getElementById('selection-choices');
+    title.innerHTML = `<span style="color:#f88">⚠ 정말 리셋하시겠습니까?</span><br><span style="font-size:13px;color:#aaa">현재 진행상황을 잃게 됩니다</span>`;
+    choices.innerHTML = `
+        <button class="choice-btn" onclick="doResetConfirm()">[1] 리셋하기</button>
+        <button class="choice-btn" onclick="cancelResetConfirm()">[2] 취소</button>
+    `;
+    ov.style.display = 'flex';
+    const _kh = function(e) {
+        const num = parseInt(e.key);
+        if(num===1) { document.removeEventListener('keydown',_kh); doResetConfirm(); }
+        else if(num===2||e.key==='Escape'||e.key==='r'||e.key==='R') { document.removeEventListener('keydown',_kh); cancelResetConfirm(); }
+    };
+    document.addEventListener('keydown', _kh);
+}
+function doResetConfirm() {
+    document.getElementById('selection-overlay').style.display='none';
+    gameState.isPaused=false;
+    gameState.isGameOver=true;
+    const desc=document.getElementById('checkpoint-desc');
+    if(desc) desc.innerText=`마지막 보스 처치 지점 (B${gameState.savePointFloor})에서 재개`;
+    document.getElementById('death-screen').style.display='flex';
+}
+function cancelResetConfirm() {
+    document.getElementById('selection-overlay').style.display='none';
+    gameState.isPaused=false;
+}
+
 // ─── 보스 입장 경고 ───
 let _pendingBossFloor = false;
 function showBossWarning() {
@@ -1664,10 +1696,7 @@ window.addEventListener('keydown', e=>{
     }
     if(e.key==='r'||e.key==='R'){
         if(!gameState.isGameOver){
-            gameState.isGameOver=true;
-            const desc=document.getElementById('checkpoint-desc');
-            if(desc) desc.innerText=`마지막 보스 처치 지점 (B${gameState.savePointFloor})에서 재개`;
-            document.getElementById('death-screen').style.display='flex';
+            showResetConfirm();
         }
         return;
     }
