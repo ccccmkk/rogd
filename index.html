@@ -765,7 +765,7 @@ function handleMove(dx, dy) {
 
     // 상점
     const sIdx=gameState.shops.findIndex(s=>s.x===nx&&s.y===ny);
-    if (sIdx!==-1) { p.x=nx; p.y=ny; triggerShop(); tick(); return; }
+    if (sIdx!==-1) { p.x=nx; p.y=ny; triggerShop(sIdx); tick(); return; }
 
     // 도박사
     const gIdx=gameState.gamblers.findIndex(g=>g.x===nx&&g.y===ny);
@@ -1082,11 +1082,21 @@ function triggerSelection(title) {
 }
 
 // ─── 상점 ───
-function triggerShop() {
+function triggerShop(shopIdx) {
     gameState.isPaused=true;
     const ov=document.getElementById('selection-overlay');
     const cont=document.getElementById('card-container');
     const close=document.getElementById('close-overlay');
+
+    function closeShop() {
+        // 상점 제거 (구매 여부 무관하게 나가면 사라짐)
+        if(shopIdx!=null && shopIdx>=0 && shopIdx<gameState.shops.length)
+            gameState.shops.splice(shopIdx,1);
+        shopIdx=-1; // 중복 제거 방지
+        gameState.isPaused=false;
+        ov.style.display='none'; close.style.display='none';
+        updateUI(); render();
+    }
     document.getElementById('overlay-title').innerText='⚔ 심연의 상점';
     const goldDisp=document.getElementById('held-gold-shop');
     goldDisp.innerText=`보유 골드: ${gameState.player.gold} G`;
@@ -1116,16 +1126,13 @@ function triggerShop() {
             gameState.player.gold-=it.price;
             it.effect(gameState.player);
             floatText('-'+it.price+'G','#ffaa00');
-            updateUI(); triggerShop();
+            addLog(`${it.name} 구매!`);
+            closeShop();
         };
         cont.appendChild(card);
     });
 
-    close.onclick=()=>{
-        gameState.isPaused=false;
-        ov.style.display='none'; close.style.display='none';
-        updateUI(); render();
-    };
+    close.onclick=closeShop;
 }
 
 // ─── 도박 시스템 ───
