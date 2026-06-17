@@ -364,7 +364,7 @@
     </div>
 
     <!-- 시작 화면 -->
-    <div id="start-overlay" class="overlay-base start-overlay" style="padding:24px 20px;justify-content:flex-start;">
+    <div id="start-overlay" class="overlay-base start-overlay" style="padding:24px 28px;justify-content:flex-start;max-width:780px;">
         <h1 style="color:var(--text-color);font-size:26px;margin-bottom:4px;text-shadow:0 0 10px var(--text-color);text-align:center;width:100%;">⚔ 던전 오디세이</h1>
         <p style="color:#aaa;font-size:12px;text-align:center;margin-bottom:14px;width:100%;">30층 깊이의 던전을 탐험하라</p>
 
@@ -374,9 +374,9 @@
             <button id="intro-tab-2" onclick="introPage(2)" style="flex:1;padding:6px;background:#111;border:1px solid #444;color:#888;font-family:monospace;cursor:pointer;font-size:13px;">[ 구역 안내 ]</button>
         </div>
 
-        <!-- 페이지 1: 게임 방법 + 조작 -->
-        <div id="intro-p1" style="width:100%;">
-            <div class="guide-box" style="margin-bottom:10px;">
+        <!-- 페이지 1: 게임 방법 + 조작 (2열) -->
+        <div id="intro-p1" style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="guide-box">
                 <p style="color:#fff;font-size:14px;margin-bottom:8px;border-bottom:1px solid #444;padding-bottom:4px;">📖 게임 방법</p>
                 <div style="line-height:1.9;font-size:13px;color:#ccc;">
                     <span style="color:#7af">@</span> 를 방향키로 움직이며 몬스터를 쓰러뜨리세요.<br>
@@ -391,15 +391,17 @@
             <div class="guide-box">
                 <p style="color:#fff;font-size:14px;margin-bottom:8px;border-bottom:1px solid #444;padding-bottom:4px;">⌨ 조작 키</p>
                 <div style="line-height:1.9;font-size:13px;color:#ccc;">
-                    <span style="color:var(--accent-color)">방향키</span> 이동/전투 &nbsp;|&nbsp; <span style="color:var(--accent-color)">Space</span> 대기<br>
-                    <span style="color:var(--accent-color)">R</span> 리셋 확인 &nbsp;|&nbsp; <span style="color:var(--accent-color)">.</span> 저장·불러오기<br>
-                    선택지는 <span style="color:var(--accent-color)">숫자키 1~3</span> 으로 입력 가능
+                    <span style="color:var(--accent-color)">방향키</span> 이동/전투<br>
+                    <span style="color:var(--accent-color)">Space</span> 대기 (1턴 소모)<br>
+                    <span style="color:var(--accent-color)">R</span> 리셋 확인<br>
+                    <span style="color:var(--accent-color)">.</span> 저장·불러오기<br>
+                    선택지는 <span style="color:var(--accent-color)">숫자키 1~3</span> 으로 입력
                 </div>
             </div>
         </div>
 
-        <!-- 페이지 2: 구역 안내 -->
-        <div id="intro-p2" style="width:100%;display:none;">
+        <!-- 페이지 2: 구역 안내 (2열) -->
+        <div id="intro-p2" style="width:100%;display:none;grid-template-columns:1fr 1fr;gap:10px;">
             <div class="guide-box">
                 <p style="color:#fff;font-size:14px;margin-bottom:8px;border-bottom:1px solid #444;padding-bottom:4px;">🗺 구역별 안내</p>
                 <div style="line-height:2;font-size:12.5px;">
@@ -411,7 +413,7 @@
                     <span style="color:#fff">B26~B30</span> 신계의 정점 — 최강의 적 &nbsp;<span style="color:#fa0">★B30 최종</span>
                 </div>
             </div>
-            <div class="guide-box" style="margin-top:10px;">
+            <div class="guide-box">
                 <p style="color:#fff;font-size:14px;margin-bottom:6px;border-bottom:1px solid #444;padding-bottom:4px;">💡 팁</p>
                 <div style="line-height:1.9;font-size:12.5px;color:#ccc;">
                     보스방 입장 전 <span style="color:#fa0">권장 전투력</span>을 확인하세요.<br>
@@ -930,8 +932,8 @@ const ui = {
 
 // ─── 시작화면 페이지 전환 ───
 function introPage(n) {
-    document.getElementById('intro-p1').style.display = n===1 ? '' : 'none';
-    document.getElementById('intro-p2').style.display = n===2 ? '' : 'none';
+    document.getElementById('intro-p1').style.display = n===1 ? 'grid' : 'none';
+    document.getElementById('intro-p2').style.display = n===2 ? 'grid' : 'none';
     const t1 = document.getElementById('intro-tab-1');
     const t2 = document.getElementById('intro-tab-2');
     t1.style.background = n===1 ? '#1a3a1a' : '#111';
